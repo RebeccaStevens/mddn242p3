@@ -7,6 +7,7 @@ import lib.LibraryManager;
 import lib.Time;
 import lib.level.cameras.CameraStatic;
 import processing.core.PGraphics;
+import processing.core.PVector;
 
 public abstract class Level {
 
@@ -14,6 +15,9 @@ public abstract class Level {
 	protected Camera camera;
 	
 	protected boolean drawBoundingBoxes;
+	
+	private PVector gravity;
+	private float airFriction;
 	
 	public Level(){
 		this(null);
@@ -27,10 +31,32 @@ public abstract class Level {
 		else{
 			this.camera = camera;
 		}
+		gravity = new PVector();
+		airFriction = 0;
 	}
 	
 	void addEntity(Entity ent){
 		entities.add(ent);
+	}
+	
+	PVector getGravity() {
+		return gravity;
+	}
+
+	float getAirFriction() {
+		return airFriction;
+	}
+
+	public void setGravity(float gravityDown){
+		setGravity(new PVector(0, gravityDown, 0));
+	}
+	
+	public void setGravity(PVector gravity){
+		this.gravity.set(gravity);
+	}
+	
+	public void setAirFriction(float airFriction) {
+		this.airFriction = airFriction;
 	}
 	
 	public void setCamera(Camera camera){

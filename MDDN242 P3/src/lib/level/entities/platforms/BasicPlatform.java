@@ -2,9 +2,10 @@ package lib.level.entities.platforms;
 
 import lib.Style;
 import lib.level.Level;
+import lib.level.entities.Platform;
 import processing.core.PGraphics;
 
-public class BasicPlatform extends AbstractPlatform {
+public class BasicPlatform extends Platform {
 
 	private Style style;
 

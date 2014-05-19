@@ -19,6 +19,7 @@ public abstract class Entity {
 	private BoundingBox boundingBox;
 	
 	private Level level;
+	private boolean gravityEffected;
 	
 	public Entity(Level level, float x, float y, float width, float height){
 		this(level, x, y, 0, width, 1, height);
@@ -44,6 +45,8 @@ public abstract class Entity {
 			this.boundingBox = new BoundingBox2D(this, width, height);
 		}
 		this.scale = new PVector(1, 1, 1);
+		
+		gravityEffected = false;
 		
 		maxLocation = null;	minLocation = null;
 		maxVelocity = null;	minVelocity = null;
@@ -72,6 +75,9 @@ public abstract class Entity {
 	 */
 	private void move(float delta){
 		// TODO add collision detection
+		if(gravityEffected){
+			accelerate(level.getGravity(), level.getAirFriction());
+		}
 		location.add(PVector.mult(velocity, delta));
 	}
 	
@@ -297,6 +303,13 @@ public abstract class Entity {
 	}
 	
 	/**
+	 * Get whether or not this entity is effected by gravity.
+	 */
+	public boolean isGravityEffected(){
+		return gravityEffected;
+	}
+	
+	/**
 	 * Set the x location of the entity.
 	 * @param x
 	 */
@@ -488,6 +501,14 @@ public abstract class Entity {
 	 */
 	public void setScale(float x, float y, float z){
 		scale.set(x, y, z);
+	}
+	
+	/**
+	 * Set whether or not this entity is effected by gravity.
+	 * @param b
+	 */
+	public void setGravityEffected(boolean b){
+		gravityEffected = b;
 	}
 	
 	/**

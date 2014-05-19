@@ -41,6 +41,7 @@ public abstract class Camera {
 	}
 
 	private void apply2D(PGraphics g){
+		// TODO
 		PApplet sketch = LibraryManager.getMe().getSketch();
 		g.translate(sketch.width/2, sketch.height/2);
 		g.rotate(rotation.x);

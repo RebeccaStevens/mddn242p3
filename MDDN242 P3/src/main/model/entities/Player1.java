@@ -1,10 +1,9 @@
 package main.model.entities;
 
-import processing.core.PGraphics;
-import lib.level.Entity;
 import lib.level.Level;
+import processing.core.PGraphics;
 
-public class Player1 extends Entity{
+public class Player1 extends Player{
 
 	public Player1(Level level, float x, float y, float z, float width, float depth, float height) {
 		super(level, x, y, z, width, depth, height);
