@@ -5,8 +5,8 @@ import processing.core.PGraphics;
 
 public class Player2 extends Player{
 
-	public Player2(Level level, float x, float y, float z, float width, float depth, float height) {
-		super(level, x, y, z, width, depth, height);
+	public Player2(Level level, float x, float y, float z) {
+		super(level, x, y, z, 50, 100, 50, 4);
 	}
 
 	@Override

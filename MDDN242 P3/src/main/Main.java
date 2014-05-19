@@ -30,6 +30,7 @@ public class Main extends PApplet{
 	@Override
 	public void draw(){
 		update();
+		lights();
 	}
 	
 	public static Main getMe() {

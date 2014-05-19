@@ -12,6 +12,8 @@ public abstract class Entity {
 	private PVector rotation;
 	private PVector scale;
 	
+	private float mass;
+	
 	private PVector maxLocation, minLocation;
 	private PVector maxVelocity, minVelocity;
 	private PVector maxRotation, minRotation;
@@ -20,37 +22,88 @@ public abstract class Entity {
 	
 	private Level level;
 	private boolean gravityEffected;
+	private int collisionGroup;
+	private CollisionMode collisionMode;
 	
+	enum CollisionMode{
+		GREATER_THAN_OR_EQUAL_TO, EQUAL_TO, LESS_THAN;
+	}
+
+	/**
+	 * Create a 2D Entity
+	 * @param level The level the entity will exist in
+	 * @param x The x location
+	 * @param y The y location
+	 * @param width The width
+	 * @param height The height
+	 */
 	public Entity(Level level, float x, float y, float width, float height){
 		this(level, x, y, 0, width, 1, height);
 	}
 	
+	/**
+	 * Create a 2D Entity
+	 * @param level The level the entity will exist in
+	 * @param location The location of this entity
+	 * @param width The width
+	 * @param height The height
+	 */
 	public Entity(Level level, PVector location, float width, float height){
 		this(level, location.x, location.y, 0, width, 1, height);
 	}
 	
+	/**
+	 * Create a 3D Entity
+	 * @param level The level the entity will exist in
+	 * @param location The location of this entity
+	 * @param width The width
+	 * @param height The height
+	 * @param depth The depth
+	 */
 	public Entity(Level level, PVector location, float width, float height, float depth){
 		this(level, location.x, location.y, location.z, width, height, depth);
 	}
 	
+	/**
+	 * Create a 3D Entity
+	 * @param level The level the entity will exist in
+	 * @param x The x location
+	 * @param y The y location
+	 * @param z The z location
+	 * @param width The width
+	 * @param height The height
+	 * @param depth The depth
+	 */
 	public Entity(Level level, float x, float y, float z, float width, float height, float depth){
 		setLevel(level);
-		this.location = new PVector(x, y, z);
-		this.velocity = new PVector();
-		this.rotation = new PVector();
+		location = new PVector(x, y, z);
+		velocity = new PVector();
+		rotation = new PVector();
 		if(level.is3D()){
-			this.boundingBox = new BoundingBox3D(this, width, height, depth);
+			boundingBox = new BoundingBox3D(this, width, height, depth);
 		}
 		else{
-			this.boundingBox = new BoundingBox2D(this, width, height);
+			boundingBox = new BoundingBox2D(this, width, height);
 		}
-		this.scale = new PVector(1, 1, 1);
+		scale = new PVector(1, 1, 1);
 		
+		mass = 1;
 		gravityEffected = false;
+		collisionGroup = 1;
+		collisionMode = CollisionMode.GREATER_THAN_OR_EQUAL_TO;
 		
 		maxLocation = null;	minLocation = null;
 		maxVelocity = null;	minVelocity = null;
 		maxRotation = null;	minRotation = null;
+	}
+
+	/**
+	 * Set the level that this level is in
+	 * @param level
+	 */
+	private void setLevel(Level level){
+		this.level = level;
+		level.addEntity(this);
 	}
 
 	/**
@@ -74,11 +127,17 @@ public abstract class Entity {
 	 * Move the entity.
 	 */
 	private void move(float delta){
-		// TODO add collision detection
-		if(gravityEffected){
-			accelerate(level.getGravity(), level.getAirFriction());
+		if(gravityEffected && !isOnGround()){
+			applyAcceleration(level.getGravity(), level.getAirFriction());
 		}
-		location.add(PVector.mult(velocity, delta));
+		PVector newLocation = PVector.add(location, PVector.mult(velocity, delta));
+		
+		if(level.canMove(this, newLocation)){
+			location.set(newLocation);
+		}
+		else{
+			velocity.mult(0);	// can't move? Set the velocity to 0
+		}
 	}
 	
 	/**
@@ -89,15 +148,15 @@ public abstract class Entity {
 	final void draw(PGraphics g){
 		g.pushMatrix();
 		if(level.is3D()){
+			g.translate(location.x, location.y, location.z);
 			g.rotateX(rotation.x);
 			g.rotateY(rotation.y);
 			g.rotateZ(rotation.z);
-			g.translate(location.x, location.y, location.z);
 			g.scale(scale.x, scale.y, scale.z);
 		}
 		else{
-			g.rotate(rotation.x);
 			g.translate(location.x, location.y);
+			g.rotate(rotation.x);
 			g.scale(scale.x, scale.y);
 		}
 		g.pushStyle();
@@ -124,7 +183,7 @@ public abstract class Entity {
 			drawBoundingBox2D(g);
 		}
 		else{
-			//TODO
+			drawBoundingBox3D(g);
 		}
 	}
 	
@@ -148,54 +207,96 @@ public abstract class Entity {
 		g.popStyle();
 	}
 	
-	private void setLevel(Level level){
-		this.level = level;
-		level.addEntity(this);
-	}
-	
-	public final Level getLevel(){
-		return level;
+	/**
+	 * Draw a 3D bounding box around the entity.
+	 * @param g The graphics object to draw to
+	 */
+	private void drawBoundingBox3D(PGraphics g) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	/**
-	 * Accelerate the entity.
+	 * Apply a force on the entity.
+	 * No friction will be applied.
+	 * @param fx X force
+	 * @param fy Y force
+	 * @return The distance traveled be the entity
+	 */
+	public PVector applyForce(float fx, float fy){
+		return applyForce(fx, fy, 0);
+	}
+	
+	/**
+	 * Apply a force on the entity.
+	 * @param fx X force
+	 * @param fy Y force
+	 * @param friction The amount of friction to apply (should be between 0 and 1 though can be greater)
+	 * @return The distance traveled be the entity
+	 */
+	public PVector applyForce(float fx, float fy, float friction){
+		return applyForce(new PVector(fx/mass, fy/mass), friction);
+	}
+	
+	/**
+	 * Apply a force on the entity.
+	 * No friction will be applied.
+	 * @param f The force to apply
+	 * @return The distance traveled be the entity
+	 */
+	public PVector applyForce(PVector f){
+		return applyForce(f, 0);
+	}
+	
+	/**
+	 * Apply a force on the entity.
+	 * @param f The force to apply
+	 * @param friction The amount of friction to apply (should be between 0 and 1 though can be greater)
+	 * @return The distance traveled be the entity
+	 */
+	public PVector applyForce(PVector f, float friction){
+		return accelerate(velocity, PVector.div(f, mass), friction);
+	}
+	
+	/**
+	 * Apply an acceleration to the entity.
 	 * No friction will be applied to the acceleration.
 	 * @param ax X acceleration
 	 * @param ay Y acceleration
 	 * @return The distance traveled be the entity
 	 */
-	public PVector accelerate(float ax, float ay){
-		return accelerate(new PVector(ax, ay));
+	public PVector applyAcceleration(float ax, float ay){
+		return applyAcceleration(ax, ay, 0);
 	}
 	
 	/**
-	 * Accelerate the entity.
+	 * Apply an acceleration to the entity.
 	 * @param ax X acceleration
 	 * @param ay Y acceleration
 	 * @param friction The amount of friction to apply (should be between 0 and 1 though can be greater)
 	 * @return The distance traveled be the entity
 	 */
-	public PVector accelerate(float ax, float ay, float friction){
-		return accelerate(velocity, new PVector(ax, ay), friction);
+	public PVector applyAcceleration(float ax, float ay, float friction){
+		return applyAcceleration(new PVector(ax, ay), friction);
 	}
 	
 	/**
-	 * Accelerate the entity.
+	 * Apply an acceleration to the entity.
 	 * No friction will be applied to the acceleration.
-	 * @param a
+	 * @param a The acceleration to apply
 	 * @return The distance traveled be the entity
 	 */
-	public PVector accelerate(PVector a){
-		return accelerate(a, 0);
+	public PVector applyAcceleration(PVector a){
+		return applyAcceleration(a, 0);
 	}
 	
 	/**
-	 * Accelerate the entity.
-	 * @param a
+	 * Apply an acceleration to the entity.
+	 * @param a The acceleration to apply
 	 * @param friction The amount of friction to apply (should be between 0 and 1 though can be greater)
 	 * @return The distance traveled be the entity
 	 */
-	public PVector accelerate(PVector a, float friction){
+	public PVector applyAcceleration(PVector a, float friction){
 		return accelerate(velocity, a, friction);
 	}
 	
@@ -222,86 +323,206 @@ public abstract class Entity {
 		  return delta;
 	}
 	
+	/**
+	 * Get the level that this entity is in.
+	 * @return the level
+	 */
+	public final Level getLevel(){
+		return level;
+	}
+
+	/**
+	 * Get the x location of this entity.
+	 * @return the x location
+	 */
 	public float getX(){
 		return location.x;
 	}
-	
+
+	/**
+	 * Get the y location of this entity.
+	 * @return the y location
+	 */
 	public float getY(){
 		return location.y;
 	}
-	
+
+	/**
+	 * Get the z location of this entity.
+	 * @return the z location
+	 */
 	public float getZ(){
 		return location.z;
 	}
 
+	/**
+	 * Get the location of this entity.
+	 * @return the location
+	 */
+	public PVector getLocation(){
+		return location.get();
+	}
+
+	/**
+	 * Get the width of this entity.
+	 * @return the width
+	 */
 	public float getWidth() {
 		return boundingBox.getWidth();
 	}
-	
+
+	/**
+	 * Get the height of this entity.
+	 * @return the height
+	 */
+	public float getHeight() {
+		return boundingBox.getHeight();
+	}
+
+	/**
+	 * Get the depth of this entity.
+	 * @return the depth
+	 */
 	public float getDepth(){
 		return boundingBox.getDepth();
 	}
 
-	public float getHeight() {
-		return boundingBox.getHeight();
-	}
-	
-	public PVector getLocation(){
-		return location.get();
-	}
-	
+	/**
+	 * Get the x velocity of this entity.
+	 * @return the x velocity
+	 */
 	public float getVelocityX(){
 		return velocity.x;
 	}
-	
+
+	/**
+	 * Get the y velocity of this entity.
+	 * @return the y velocity
+	 */
 	public float getVelocityY(){
 		return velocity.y;
 	}
-	
+
+	/**
+	 * Get the z velocity of this entity.
+	 * @return the z velocity
+	 */
 	public float getVelocityZ(){
 		return velocity.z;
 	}
-	
+
+	/**
+	 * Get the velocity of this entity.
+	 * @return the velocity
+	 */
 	public PVector getVelocity(){
 		return velocity.get();
 	}
-	
-	public float getRotationPan(){
+
+	/**
+	 * Get the tilt rotation of this entity.
+	 * @return the tilt rotation
+	 */
+	public float getRotationTilt(){
 		return rotation.x;
 	}
-	
-	public float getRotationTilt(){
+
+	/**
+	 * Get the pan rotation of this entity.
+	 * @return the pan rotation
+	 */
+	public float getRotationPan(){
 		return rotation.y;
 	}
-	
+
+	/**
+	 * Get the roll rotation of this entity.
+	 * @return the roll rotation
+	 */
 	public float getRotationRoll(){
 		return rotation.z;
 	}
 	
+	/**
+	 * Get the rotation of this entity.
+	 * @return the rotation
+	 */
 	public float getRotation2D(){
 		return rotation.x;
 	}
 	
+	/**
+	 * Get the rotation of this entity (tilt, pan, roll).
+	 * @return the rotation
+	 */
 	public PVector getRotation3D(){
 		return rotation.get();
 	}
-	
+
+	/**
+	 * Get the x scale of this entity.
+	 * @return The x scale
+	 */
 	public float getScaleX(){
 		return scale.x;
 	}
-	
+
+	/**
+	 * Get the x scale of this entity.
+	 * @return The x scale
+	 */
 	public float getScaleY(){
 		return scale.y;
 	}
 	
+	/**
+	 * Get the z scale of this entity.
+	 * @return The z scale
+	 */
 	public float getScaleZ(){
 		return scale.z;
 	}
 	
+	/**
+	 * Get the scale of this entity.
+	 * @return The scale
+	 */
 	public PVector getScale(){
 		return scale.get();
 	}
 	
+	/**
+	 * Get the mass of this entity.
+	 * @return The mass
+	 */
+	public float getMass() {
+		return mass;
+	}
+	
+	/**
+	 * Get the bounding box used by this entity.
+	 * @return
+	 */
+	BoundingBox getBoundingBox() {
+		return boundingBox;
+	}
+	
+	/**
+	 * Get the collision group of this entity.
+	 * @return
+	 */
+	int getCollisionGroup() {
+		return collisionGroup;
+	}
+	
+	/**
+	 * Get the collision mode that this entity uses.
+	 * @return
+	 */
+	CollisionMode getCollisionMode() {
+		return collisionMode;
+	}
+
 	/**
 	 * Get whether or not this entity is effected by gravity.
 	 */
@@ -309,6 +530,15 @@ public abstract class Entity {
 		return gravityEffected;
 	}
 	
+	/**
+	 * Returns whether or not this entity is on the ground.
+	 * @return
+	 */
+	public boolean isOnGround() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 	/**
 	 * Set the x location of the entity.
 	 * @param x
@@ -418,23 +648,23 @@ public abstract class Entity {
 	}
 	
 	/**
-	 * Set the pan rotation of the entity.
-	 * This is the rotation in the xy plain.
-	 * (For 3D games only)
-	 * @param pan
-	 */
-	public void setRotationPan(float pan){
-		rotation.x = pan;
-	}
-	
-	/**
 	 * Set the tilt rotation of the entity.
-	 * This is the rotation in the xz plain.
+	 * This is the rotation in the xy plain.
 	 * (For 3D games only)
 	 * @param tilt
 	 */
 	public void setRotationTilt(float tilt){
-		rotation.y = tilt;
+		rotation.x = tilt;
+	}
+
+	/**
+	 * Set the pan rotation of the entity.
+	 * This is the rotation in the xz plain.
+	 * (For 3D games only)
+	 * @param pan
+	 */
+	public void setRotationPan(float pan){
+		rotation.y = pan;
 	}
 	
 	/**
@@ -450,30 +680,30 @@ public abstract class Entity {
 	/**
 	 * Set the rotation of the entity.
 	 * (For 2D games only)
-	 * @param pan
+	 * @param rotation
 	 */
-	public void setRotation(float rot){
-		rotation.x = rot;
+	public void setRotation(float rotation){
+		this.rotation.x = rotation;
 	}
 	
 	/**
 	 * Set the rotation of the entity.
 	 * (For 3D games only)
-	 * @param pan
 	 * @param tilt
+	 * @param pan
 	 * @param roll
 	 */
-	public void setRotation(float pan, float tilt, float roll){
-		rotation.set(pan, tilt, roll);
+	public void setRotation(float tilt, float pan, float roll){
+		rotation.set(tilt, pan, roll);
 	}
 	
 	/**
 	 * Set the rotation of the entity.
 	 * (For 3D games only)
-	 * @param rot
+	 * @param rotation
 	 */
-	public void setRotation(PVector rot){
-		rotation.set(rot);
+	public void setRotation(PVector rotation){
+		this.rotation.set(rotation);
 	}
 	
 	/**
@@ -504,11 +734,63 @@ public abstract class Entity {
 	}
 	
 	/**
+	 * Set the mass of the entity.
+	 * The mass must be greater than 0.
+	 * @param mass The mass
+	 */
+	public void setMass(float mass) {
+		if(mass<=0) throw new RuntimeException("Can not set mass to zero or a negitive value.");
+		this.mass = mass;
+	}
+	
+	/**
 	 * Set whether or not this entity is effected by gravity.
 	 * @param b
 	 */
 	public void setGravityEffected(boolean b){
 		gravityEffected = b;
+	}
+	
+	/**
+	 * Set the collision group that this entity is apart of.
+	 * The group number cannot be negative. If group value equals 0 then the entity will not collide with any thing.
+	 * @param group The group to put this entity in
+	 */
+	public void setCollisionGroup(int group){
+		if(group < 0) throw new RuntimeException("Cannot set an entity's collision group to a negative namuber.");
+		collisionGroup = group;
+	}
+	
+	/**
+	 * Set the collision mode that this entity uses.
+	 * Modes:
+	 * <ul>
+	 * <li><strong>null</strong>: do not collide with anything</li>
+	 * <li><strong>GREATER_THAN_OR_EQUAL_TO</strong>: will only collide with entities in the same or a higher collision group</li>
+	 * <li><strong>EQUAL_TO</strong>: will only collide with entities in the same collision group</li>
+	 * <li><strong>LESS_THAN</strong>: will only collide with entities in a lower collision group</li>
+	 * </ul>
+	 * @param mode The collision mode to use
+	 */
+	public void setCollisionMode(CollisionMode mode){
+		if(mode == null){
+			setCollisionGroup(0);
+		}
+		else{
+			collisionMode = mode;
+		}
+	}
+	
+	/**
+	 * See {@link #setCollisionGroup(int)} and {@link #setCollisionMode(CollisionMode)} for details.
+	 * @param group The group to put this entity in
+	 * @param mode The collision mode to use
+	 * @see setCollisionGroup(int)
+	 * @see setCollisionMode(CollisionMode)
+	 */
+	public void setCollisionMode(int group, CollisionMode mode){
+		setCollisionGroup(group);
+		setCollisionMode(mode);
 	}
 	
 	/**
@@ -679,12 +961,12 @@ public abstract class Entity {
 	/**
 	 * Limit the rotation of this entity.
 	 * This entity will not have a rotation less than any of the give values.
-	 * @param minPan The minimum pan angle that this entity can be at
 	 * @param minTilt The minimum tilt angle that this entity can be at
+	 * @param minPan The minimum pan angle that this entity can be at
 	 * @param minRoll The minimum roll angle that this entity can be at
 	 */
-	public void limitRotationMin(float minPan, float minTilt, float minRoll){
-		limitRotationMin(new PVector(minPan, minTilt, minRoll));
+	public void limitRotationMin(float minTilt, float minPan, float minRoll){
+		limitRotationMin(new PVector(minTilt, minPan, minRoll));
 	}
 	
 	/**
@@ -717,12 +999,12 @@ public abstract class Entity {
 	/**
 	 * Limit the rotation of this entity.
 	 * This entity will not have a rotation greater than any of the give values.
-	 * @param maxPan The maximum pan angle that this entity can be at
 	 * @param maxTilt The maximum tilt angle that this entity can be at
+	 * @param maxPan The maximum pan angle that this entity can be at
 	 * @param maxRoll The maximum roll angle that this entity can be at
 	 */
-	public void limitRotationMax(float maxPan, float maxTilt, float maxRoll){
-		limitRotationMax(new PVector(maxPan, maxTilt, maxRoll));
+	public void limitRotationMax(float maxTilt, float maxPan, float maxRoll){
+		limitRotationMax(new PVector(maxTilt, maxPan, maxRoll));
 	}
 	
 	/**

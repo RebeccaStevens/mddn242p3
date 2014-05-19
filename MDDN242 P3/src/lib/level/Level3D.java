@@ -1,10 +1,12 @@
 package lib.level;
 
+import lib.LibraryManager;
+
 
 public class Level3D extends Level {
 
 	public Level3D(){
-		if(!getGraphics().is3D()) throw new RuntimeException("Cannot make a 3D level using 2D graphics.");
+		if(!LibraryManager.getMe().getGraphics().is3D()) throw new RuntimeException("Cannot make a 3D level using 2D graphics.");
 	}
 
 	@Override

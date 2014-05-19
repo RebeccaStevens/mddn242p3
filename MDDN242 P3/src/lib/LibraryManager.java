@@ -2,6 +2,8 @@ package lib;
 
 import lib.level.Level;
 import processing.core.PApplet;
+import processing.core.PGraphics;
+import processing.event.KeyEvent;
 
 public class LibraryManager {
 	
@@ -23,10 +25,8 @@ public class LibraryManager {
 		time = new Time(sketch);
 		background = new Background(0xFF2277FF);
 		
-		sketch.g.rectMode(PApplet.CENTER);
-		sketch.g.ellipseMode(PApplet.CENTER);
-		sketch.g.imageMode(PApplet.CENTER);
 		sketch.registerMethod("pre", this);
+		sketch.registerMethod("keyEvent", this);
 	}
 	
 	public Level getActiveLevel() {
@@ -37,11 +37,6 @@ public class LibraryManager {
 		activeLevel = level;
 	}
 	
-	public void pre(){
-		update();
-		draw();
-	}
-	
 	private void update(){
 		Time.update(sketch);
 		if(activeLevel != null){
@@ -49,22 +44,39 @@ public class LibraryManager {
 		}
 	}
 	
-	private void draw() {
+	public void pre(){
+		update();
+		draw(getGraphics());
+	}
+
+	private void draw(PGraphics g) {
+		g.pushStyle();
+		g.rectMode(PApplet.CENTER);
+		g.ellipseMode(PApplet.CENTER);
+		g.imageMode(PApplet.CENTER);
 		if(activeLevel != null){
-			background.draw(sketch.g);
-			activeLevel.draw();
+			background.draw(g);
+			activeLevel.draw(g);
+		}
+		g.popStyle();
+	}
+
+	public void keyEvent(KeyEvent e){
+		switch(e.getAction()){
+			case KeyEvent.PRESS:	keyPressed(e);	break;
+			case KeyEvent.RELEASE:	keyReleased(e);	break;
 		}
 	}
 
-	public void keyPressed(int keyCode){
+	private void keyPressed(KeyEvent e){
 		for(Key key : Key.keys){
-			key.update(keyCode, true);
+			key.update(e.getKeyCode(), true);
 		}
 	}
 
-	public void keyReleased(int keyCode){
+	private void keyReleased(KeyEvent e){
 		for(Key key : Key.keys){
-			key.update(keyCode, false);
+			key.update(e.getKeyCode(), false);
 		}
 	}
 	
@@ -74,6 +86,14 @@ public class LibraryManager {
 
 	public Time getTime(){
 		return time;
+	}
+	
+	/**
+	 * Get the graphics object that the level is being drawn to.
+	 * @return
+	 */
+	public final PGraphics getGraphics() {
+		return sketch.g;
 	}
 
 	public static LibraryManager getMe(){

@@ -23,12 +23,25 @@ public class BoundingBox2D extends BoundingBox {
 		return box.contains(new Point2D.Float(point.x, point.y));
 	}
 
-	public boolean contains(BoundingBox2D other) {
+	@Override
+	public boolean contains(BoundingBox2D other, PVector location) {
 		return box.contains(other.box);
 	}
 	
-	public boolean intersects(BoundingBox2D other) {
+	@Override
+	public boolean contains(BoundingBox3D other, PVector location) {
+		return false;
+	}
+
+	@Override
+	public boolean intersects(BoundingBox2D other, PVector location) {
 		return box.intersects(other.box);
+	}
+
+	@Override
+	public boolean intersects(BoundingBox3D other, PVector location) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	@Override

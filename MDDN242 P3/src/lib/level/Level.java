@@ -19,10 +19,17 @@ public abstract class Level {
 	private PVector gravity;
 	private float airFriction;
 	
+	/**
+	 * Create a level with a static camera
+	 */
 	public Level(){
 		this(null);
 	}
 	
+	/**
+	 * Create a level with the given camera
+	 * @param camera
+	 */
 	public Level(Camera camera){
 		entities = new ArrayList<Entity>();
 		if(camera == null){
@@ -35,36 +42,79 @@ public abstract class Level {
 		airFriction = 0;
 	}
 	
-	void addEntity(Entity ent){
-		entities.add(ent);
+	/**
+	 * Add an entity to the level.
+	 * (To be called from the Entity class)
+	 * @param entity
+	 */
+	void addEntity(Entity entity){
+		entities.add(entity);
 	}
 	
+	/**
+	 * Get the gravity on the level.
+	 * @return
+	 */
 	PVector getGravity() {
 		return gravity;
 	}
 
-	float getAirFriction() {
+	/**
+	 * Get the amount of air friction in the level.
+	 * @return
+	 */
+	public float getAirFriction() {
 		return airFriction;
 	}
 
+	/**
+	 * Set the downward acceleration of gravity.
+	 * Horizontal acceleration will be set to 0.
+	 * @param gravityDown
+	 */
 	public void setGravity(float gravityDown){
 		setGravity(new PVector(0, gravityDown, 0));
 	}
 	
+	/**
+	 * Set the acceleration of gravity.
+	 * @param x
+	 * @param y
+	 * @param z
+	 */
+	public void setGravity(float x, float y, float z){
+		setGravity(new PVector(x, y, z));
+	}
+	
+	/**
+	 * Set the acceleration of gravity.
+	 * @param gravity
+	 */
 	public void setGravity(PVector gravity){
 		this.gravity.set(gravity);
 	}
 	
+	/**
+	 * Set the amount of air friction in the level.
+	 * @param airFriction
+	 */
 	public void setAirFriction(float airFriction) {
 		this.airFriction = airFriction;
 	}
 	
+	/**
+	 * Set the active camera used in the level.
+	 * @param camera
+	 */
 	public void setCamera(Camera camera){
 		this.camera.setLevel(null);
 		this.camera = camera;
 		this.camera.setLevel(this);
 	}
 	
+	/**
+	 * Update the level
+	 */
 	public void update(){
 		float timeStep = Time.getTimeStep();
 		camera.update(timeStep);
@@ -73,8 +123,11 @@ public abstract class Level {
 		}
 	}
 	
-	public void draw(){
-		PGraphics g = getGraphics();
+	/**
+	 * Draw the level.
+	 * @param g The graphics to draw to
+	 */
+	public void draw(PGraphics g){
 		g.pushMatrix();
 		camera.apply(g);
 		for(Entity e : entities){
@@ -83,21 +136,73 @@ public abstract class Level {
 		g.popMatrix();
 	}
 	
+	/**
+	 * Make this the active level
+	 */
 	public final void makeActive(){
 		LibraryManager.getMe().setActiveLevel(this);
 	}
 	
-	public final void drawBoundingBoxes(boolean b){
-		drawBoundingBoxes = b;
-	}
-	
+	/**
+	 * Get whether or not the bounding boxes of the entities are being drawn.
+	 * @return
+	 */
 	public final boolean isDrawBoundingBoxes(){
 		return drawBoundingBoxes;
 	}
 
-	public final PGraphics getGraphics() {
-		return LibraryManager.getMe().getSketch().g;
+	/**
+	 * Set whether or not to draw the bounding boxes of the entities in the level.
+	 * @param b
+	 */
+	public final void setDrawBoundingBoxes(boolean b){
+		drawBoundingBoxes = b;
 	}
 	
+	/**
+	 * Returns whether or not the level is 3D
+	 * @return
+	 */
 	public abstract boolean is3D();
+
+	/**
+	 * Return whether or not the given entity can move to the new location given without colliding with anything else.
+	 * Note: This method does collision detection.
+	 * @param entity The entity to move
+	 * @param newLocation The new location that this entity wants to move to
+	 * @return
+	 * TODO increase efficiency
+	 */
+	boolean canMove(Entity entity, PVector newLocation) {
+		if(entity.getCollisionGroup() == 0) return true;
+		for(Entity ent : entities){
+			if(ent == entity) continue;
+			if(!needToCheckCollision(entity, ent)) continue;
+			if(entity.getBoundingBox().intersects(ent.getBoundingBox(), newLocation)){
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Returns whether or not collision detection needs to be done between the two entities
+	 * @param entity1 The entity to check if it can collide with the other one
+	 * @param entity2 The other entity to check against
+	 * @return
+	 */
+	private boolean needToCheckCollision(Entity entity1, Entity entity2) {
+		if(entity2.getCollisionGroup() == 0) return false;
+		
+		switch(entity1.getCollisionMode()){
+		case EQUAL_TO:
+			return entity2.getCollisionGroup() == entity1.getCollisionGroup();
+		case GREATER_THAN_OR_EQUAL_TO:
+			return entity2.getCollisionGroup() >= entity1.getCollisionGroup();
+		case LESS_THAN:
+			return entity1.getCollisionGroup() <  entity1.getCollisionGroup();
+		default:
+			return false;
+		}
+	}
 }
