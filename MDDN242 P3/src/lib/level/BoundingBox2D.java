@@ -45,17 +45,17 @@ public class BoundingBox2D extends BoundingBox {
 	}
 
 	@Override
-	public float getX() {
+	public float getCenterX() {
 		return (float) box.getX();
 	}
 
 	@Override
-	public float getY() {
+	public float getCenterY() {
 		return (float) box.getY();
 	}
 
 	@Override
-	public float getZ(){
+	public float getCenterZ(){
 		return 0;
 	}
 
@@ -71,6 +71,36 @@ public class BoundingBox2D extends BoundingBox {
 
 	@Override
 	public float getDepth() {
+		return 0;
+	}
+
+	@Override
+	public float getMinX() {
+		return (float) (box.getX() - box.getWidth() / 2);
+	}
+
+	@Override
+	public float getMinY() {
+		return (float) (box.getY() - box.getHeight() / 2);
+	}
+
+	@Override
+	public float getMinZ() {
+		return 0;
+	}
+
+	@Override
+	public float getMaxX() {
+		return (float) (box.getX() + box.getWidth() / 2);
+	}
+
+	@Override
+	public float getMaxY() {
+		return (float) (box.getY() + box.getHeight() / 2);
+	}
+
+	@Override
+	public float getMaxZ() {
 		return 0;
 	}
 }

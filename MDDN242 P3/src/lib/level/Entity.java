@@ -1,6 +1,7 @@
 package lib.level;
 
 import lib.Time;
+import lib.level.entities.Ground;
 import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PVector;
@@ -17,6 +18,7 @@ public abstract class Entity {
 	private PVector maxLocation, minLocation;
 	private PVector maxVelocity, minVelocity;
 	private PVector maxRotation, minRotation;
+	private float maxHorizontalVelocity;
 	
 	private BoundingBox boundingBox;
 	
@@ -24,6 +26,8 @@ public abstract class Entity {
 	private boolean gravityEffected;
 	private int collisionGroup;
 	private CollisionMode collisionMode;
+	
+	private Ground ground;
 	
 	enum CollisionMode{
 		GREATER_THAN_OR_EQUAL_TO, EQUAL_TO, LESS_THAN;
@@ -92,6 +96,8 @@ public abstract class Entity {
 		collisionGroup = 1;
 		collisionMode = CollisionMode.GREATER_THAN_OR_EQUAL_TO;
 		
+		ground = null;
+		
 		maxLocation = null;	minLocation = null;
 		maxVelocity = null;	minVelocity = null;
 		maxRotation = null;	minRotation = null;
@@ -113,10 +119,12 @@ public abstract class Entity {
 	 */
 	final void _update(float delta){
 		update(delta);
+		applyMotionLimits();
 		move(delta);
-		applyLimits();
+		applyLocationLimits();
+		groundDetection();
 	}
-	
+
 	/**
 	 * Update the entity.
 	 * @param delta The amount of game time that has passed since the last frame
@@ -127,9 +135,15 @@ public abstract class Entity {
 	 * Move the entity.
 	 */
 	private void move(float delta){
-		if(gravityEffected && !isOnGround()){
+		boolean onGround = isOnGround();
+		
+		if(gravityEffected && !onGround){
 			applyAcceleration(level.getGravity(), level.getAirFriction());
 		}
+		if(onGround){
+			applyAcceleration(0, 0, 0, ground.getGroundFriction());
+		}
+		
 		PVector newLocation = PVector.add(location, PVector.mult(velocity, delta));
 		
 		if(level.canMove(this, newLocation)){
@@ -193,8 +207,8 @@ public abstract class Entity {
 	 */
 	private void drawBoundingBox2D(PGraphics g) {
 		BoundingBox2D bb = (BoundingBox2D) boundingBox;
-		float bbx = bb.getX();
-		float bby = bb.getY();
+		float bbx = bb.getCenterX();
+		float bby = bb.getCenterY();
 		float bbw = bb.getWidth();
 		float bbh = bb.getHeight();
 		
@@ -215,16 +229,9 @@ public abstract class Entity {
 		// TODO Auto-generated method stub
 		
 	}
-
-	/**
-	 * Apply a force on the entity.
-	 * No friction will be applied.
-	 * @param fx X force
-	 * @param fy Y force
-	 * @return The distance traveled be the entity
-	 */
-	public PVector applyForce(float fx, float fy){
-		return applyForce(fx, fy, 0);
+	
+	private void groundDetection(){
+		ground = level.getGroundObject(this);
 	}
 	
 	/**
@@ -235,17 +242,19 @@ public abstract class Entity {
 	 * @return The distance traveled be the entity
 	 */
 	public PVector applyForce(float fx, float fy, float friction){
-		return applyForce(new PVector(fx/mass, fy/mass), friction);
+		return applyForce(fx, fy, 0, friction);
 	}
 	
 	/**
 	 * Apply a force on the entity.
-	 * No friction will be applied.
-	 * @param f The force to apply
+	 * @param fx X force
+	 * @param fy Y force
+	 * @param fz Z force
+	 * @param friction The amount of friction to apply (should be between 0 and 1 though can be greater)
 	 * @return The distance traveled be the entity
 	 */
-	public PVector applyForce(PVector f){
-		return applyForce(f, 0);
+	public PVector applyForce(float fx, float fy, float fz, float friction){
+		return applyForce(new PVector(fx/mass, fy/mass, fz/mass), friction);
 	}
 	
 	/**
@@ -260,24 +269,25 @@ public abstract class Entity {
 	
 	/**
 	 * Apply an acceleration to the entity.
-	 * No friction will be applied to the acceleration.
-	 * @param ax X acceleration
-	 * @param ay Y acceleration
-	 * @return The distance traveled be the entity
-	 */
-	public PVector applyAcceleration(float ax, float ay){
-		return applyAcceleration(ax, ay, 0);
-	}
-	
-	/**
-	 * Apply an acceleration to the entity.
 	 * @param ax X acceleration
 	 * @param ay Y acceleration
 	 * @param friction The amount of friction to apply (should be between 0 and 1 though can be greater)
 	 * @return The distance traveled be the entity
 	 */
 	public PVector applyAcceleration(float ax, float ay, float friction){
-		return applyAcceleration(new PVector(ax, ay), friction);
+		return applyAcceleration(ax, ay, 0, friction);
+	}
+	
+	/**
+	 * Apply an acceleration to the entity.
+	 * @param ax X acceleration
+	 * @param ay Y acceleration
+	 * @param az Z acceleration
+	 * @param friction The amount of friction to apply (should be between 0 and 1 though can be greater)
+	 * @return The distance traveled be the entity
+	 */
+	public PVector applyAcceleration(float ax, float ay, float az, float friction){
+		return applyAcceleration(new PVector(ax, ay, az), friction);
 	}
 	
 	/**
@@ -508,6 +518,24 @@ public abstract class Entity {
 	}
 	
 	/**
+	 * Get the bounding box used by this entity.
+	 * @return
+	 */
+	public BoundingBox3D getBoundingBox3D() {
+		if(!(boundingBox instanceof BoundingBox3D)) throw new RuntimeException("Cannot get a 3D bounding for a 2D entity.");
+		return (BoundingBox3D) boundingBox;
+	}
+	
+	/**
+	 * Get the bounding box used by this entity.
+	 * @return
+	 */
+	public BoundingBox2D getBoundingBox2D() {
+		if(!(boundingBox instanceof BoundingBox2D)) throw new RuntimeException("Cannot get a 2D bounding for a 3D entity.");
+		return (BoundingBox2D) boundingBox;
+	}
+	
+	/**
 	 * Get the collision group of this entity.
 	 * @return
 	 */
@@ -535,8 +563,7 @@ public abstract class Entity {
 	 * @return
 	 */
 	public boolean isOnGround() {
-		// TODO Auto-generated method stub
-		return false;
+		return ground != null;
 	}
 
 	/**
@@ -888,7 +915,7 @@ public abstract class Entity {
 	 * @param minY The minimum y velocity of this entity
 	 * @param minZ The minimum z velocity of this entity
 	 */
-	public void limitVelocitynMin(float minX, float minY, float minZ){
+	public void limitVelocityMin(float minX, float minY, float minZ){
 		limitVelocityMin(new PVector(minX, minY, minZ));
 	}
 	
@@ -947,6 +974,10 @@ public abstract class Entity {
 		else{
 			maxVelocity.set(max);
 		}
+	}
+	
+	public void limitVelocityHorizontal(float maxHorizontalVelocity){
+		this.maxHorizontalVelocity = maxHorizontalVelocity;
 	}
 	
 	/**
@@ -1067,6 +1098,11 @@ public abstract class Entity {
 	public void removeLimitVelocity(){
 		removeLimitVelocityMin();
 		removeLimitVelocityMax();
+		removeLimitVelocityHorizontal();
+	}
+
+	public void removeLimitVelocityHorizontal(){
+		this.maxHorizontalVelocity = Float.NaN;
 	}
 
 	/**
@@ -1092,9 +1128,9 @@ public abstract class Entity {
 	}
 	
 	/**
-	 * Apply the limits to this entities attributes.
+	 * Apply the limits the location of this entity.
 	 */
-	private void applyLimits(){
+	private void applyLocationLimits(){
 		if(minLocation != null){
 			location.x = Math.max(location.x, minLocation.x);
 			location.y = Math.max(location.y, minLocation.y);
@@ -1105,6 +1141,22 @@ public abstract class Entity {
 			location.y = Math.min(location.y, maxLocation.y);
 			location.z = Math.min(location.z, maxLocation.z);
 		}
+		if(minRotation != null){
+			rotation.x = Math.max(rotation.x, minRotation.x);
+			rotation.y = Math.max(rotation.y, minRotation.y);
+			rotation.z = Math.max(rotation.z, minRotation.z);
+		}
+		if(maxRotation != null){
+			rotation.x = Math.min(rotation.x, maxRotation.x);
+			rotation.y = Math.min(rotation.y, maxRotation.y);
+			rotation.z = Math.min(rotation.z, maxRotation.z);
+		}
+	}
+	
+	/**
+	 * Apply the limits the motion of this entity.
+	 */
+	private void applyMotionLimits() {
 		if(minVelocity != null){
 			velocity.x = Math.max(velocity.x, minVelocity.x);
 			velocity.y = Math.max(velocity.y, minVelocity.y);
@@ -1115,15 +1167,15 @@ public abstract class Entity {
 			velocity.y = Math.min(velocity.y, maxVelocity.y);
 			velocity.z = Math.min(velocity.z, maxVelocity.z);
 		}
-		if(minRotation != null){
-			rotation.x = Math.max(rotation.x, minRotation.x);
-			rotation.y = Math.max(rotation.y, minRotation.y);
-			rotation.z = Math.max(rotation.z, minRotation.z);
-		}
-		if(maxRotation != null){
-			rotation.x = Math.min(rotation.x, maxRotation.x);
-			rotation.y = Math.min(rotation.y, maxRotation.y);
-			rotation.z = Math.min(rotation.z, maxRotation.z);
+		if(!Float.isNaN(maxHorizontalVelocity)){
+			PVector temp = velocity.get();
+			temp.y = 0;
+			if(temp.mag() > maxHorizontalVelocity){
+				temp.normalize();
+				temp.mult(maxHorizontalVelocity);
+				velocity.x = temp.x;
+				velocity.z = temp.z;
+			}
 		}
 	}
 }

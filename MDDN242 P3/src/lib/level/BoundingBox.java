@@ -54,9 +54,21 @@ abstract class BoundingBox {
 
 	public abstract float getDepth();
 
-	public abstract float getX();
+	public abstract float getCenterX();
 	
-	public abstract float getY();
+	public abstract float getCenterY();
 	
-	public abstract float getZ();
+	public abstract float getCenterZ();
+
+	public abstract float getMinX();
+	
+	public abstract float getMinY();
+	
+	public abstract float getMinZ();
+
+	public abstract float getMaxX();
+	
+	public abstract float getMaxY();
+	
+	public abstract float getMaxZ();
 }

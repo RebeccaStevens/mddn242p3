@@ -6,7 +6,7 @@ public class BoundingBox3D extends BoundingBox {
 	
 	private float width, height, depth;
 	private float halfWidth, halfHeight, halfDepth;
-	private PVector location;
+	private PVector location, minLocation, maxLocation;
 
 	public BoundingBox3D(Entity ent, float width, float height, float depth){
 		this(ent, 0, 0, 0, width, height, depth);
@@ -14,16 +14,20 @@ public class BoundingBox3D extends BoundingBox {
 
 	public BoundingBox3D(Entity ent, float x, float y, float z, float width, float height, float depth){
 		super(ent);
-		location = new PVector(x, y, z);
 		this.halfWidth  = (this.width  = width)  / 2;
 		this.halfHeight = (this.height = height) / 2;
 		this.halfDepth  = (this.depth  = depth)  / 2;
+		this.location = new PVector(x, y, z);
+		this.minLocation = new PVector(x-halfWidth, y-halfHeight, z-halfDepth);
+		this.maxLocation = new PVector(x+halfWidth, y+halfHeight, z+halfDepth);
 	}
 
 	@Override
 	public boolean contains(PVector point) {
-		// TODO Auto-generated method stub
-		return false;
+		PVector offset = entity.getLocation();
+		return		point.x >= minLocation.x+offset.x && point.x <= maxLocation.x+offset.x
+				&&	point.y >= minLocation.y+offset.y && point.y <= maxLocation.y+offset.y
+				&&	point.z >= minLocation.z+offset.z && point.z <= maxLocation.z+offset.z;
 	}
 
 	@Override
@@ -70,18 +74,48 @@ public class BoundingBox3D extends BoundingBox {
 	}
 
 	@Override
-	public float getX() {
+	public float getCenterX() {
 		return location.x;
 	}
 
 	@Override
-	public float getY() {
+	public float getCenterY() {
 		return location.y;
 	}
 
 	@Override
-	public float getZ() {
+	public float getCenterZ() {
 		return location.z;
+	}
+
+	@Override
+	public float getMinX() {
+		return minLocation.x;
+	}
+
+	@Override
+	public float getMinY() {
+		return minLocation.y;
+	}
+
+	@Override
+	public float getMinZ() {
+		return minLocation.z;
+	}
+
+	@Override
+	public float getMaxX() {
+		return maxLocation.x;
+	}
+
+	@Override
+	public float getMaxY() {
+		return maxLocation.y;
+	}
+
+	@Override
+	public float getMaxZ() {
+		return maxLocation.z;
 	}
 
 }

@@ -12,12 +12,13 @@ public class Player1 extends Player{
 	private Key moveLeft	= new Key('A');
 	private Key moveRight	= new Key('D');
 	
-	private float walkForce = 10000;
+	private float walkForce = 50000;
 	private PVector walk;
 
 	public Player1(Level level, float x, float y, float z) {
 		super(level, x, y, z, 70, 150, 70, 7);
 		walk = new PVector();
+		limitVelocityHorizontal(500);
 	}
 
 	@Override
@@ -26,7 +27,7 @@ public class Player1 extends Player{
 		walk.normalize();
 		walk.mult(walkForce);
 		
-		applyForce(walk);
+		applyForce(walk, 0);
 	}
 
 	@Override

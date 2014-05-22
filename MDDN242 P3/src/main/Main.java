@@ -14,17 +14,22 @@ public class Main extends PApplet{
 	public Main(){
 		me = this;
 	}
+	
+	@Override
+	public void init(){
+		frame.setTitle("by Mike Stevens");
+		super.init();
+	}
 
 	@Override
 	public void setup(){
 		size(1024, 768, P3D);
-		frame.setTitle("by Mike Stevens");
 		libManager = new LibraryManager(this);
 		new Level1().makeActive();
 	}
 	
 	public void update(){
-		
+
 	}
 
 	@Override

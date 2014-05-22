@@ -6,12 +6,15 @@ import java.util.List;
 import lib.LibraryManager;
 import lib.Time;
 import lib.level.cameras.CameraStatic;
+import lib.level.entities.Ground;
 import processing.core.PGraphics;
 import processing.core.PVector;
 
 public abstract class Level {
 
 	protected List<Entity> entities;
+	protected List<Ground> groundEntities;
+	
 	protected Camera camera;
 	
 	protected boolean drawBoundingBoxes;
@@ -32,6 +35,7 @@ public abstract class Level {
 	 */
 	public Level(Camera camera){
 		entities = new ArrayList<Entity>();
+		groundEntities = new ArrayList<Ground>();
 		if(camera == null){
 			this.camera = new CameraStatic(this);
 		}
@@ -49,6 +53,19 @@ public abstract class Level {
 	 */
 	void addEntity(Entity entity){
 		entities.add(entity);
+		if(entity instanceof Ground){
+			groundEntities.add((Ground) entity);
+		}
+	}
+	
+	/**
+	 * Remove an entity from the level.
+	 * (To be called from the Entity class)
+	 * @param entity
+	 */
+	void removeEntity(Entity entity){
+		entities.remove(entity);
+		groundEntities.remove(entity);
 	}
 	
 	/**
@@ -170,7 +187,7 @@ public abstract class Level {
 	 * Note: This method does collision detection.
 	 * @param entity The entity to move
 	 * @param newLocation The new location that this entity wants to move to
-	 * @return
+	 * @return true if the entity can move to the new location without colliding with anything, otherwise false
 	 * TODO increase efficiency
 	 */
 	boolean canMove(Entity entity, PVector newLocation) {
@@ -183,6 +200,32 @@ public abstract class Level {
 			}
 		}
 		return true;
+	}
+	
+	/**
+	 * Detect if this entity is on the ground. If so, the ground object is returned.
+	 * Note: This method does collision detection.
+	 * @param entity The entity to test
+	 * @return the ground object or null if not on the ground
+	 * TODO increase efficiency
+	 */
+	Ground getGroundObject(Entity entity) {
+		if(entity.getCollisionGroup() == 0) return null;
+		for(Ground grd : groundEntities){
+			if(grd == entity) continue;
+			if(!needToCheckCollision(entity, grd)) continue;
+			BoundingBox bb = entity.getBoundingBox();
+			BoundingBox otherbb = ((Entity)grd).getBoundingBox();
+			float groundDist = 1F;
+			if(otherbb.contains(new PVector(entity.getX() + bb.getCenterX(), entity.getY() + bb.getMaxY() + groundDist, entity.getZ() + bb.getCenterZ()))
+			|| otherbb.contains(new PVector(entity.getX() + bb.getMinX(),    entity.getY() + bb.getMaxY() + groundDist, entity.getZ() + bb.getMinZ()))
+			|| otherbb.contains(new PVector(entity.getX() + bb.getMinX(),    entity.getY() + bb.getMaxY() + groundDist, entity.getZ() + bb.getMaxZ()))
+			|| otherbb.contains(new PVector(entity.getX() + bb.getMaxX(),    entity.getY() + bb.getMaxY() + groundDist, entity.getZ() + bb.getMinZ()))
+			|| otherbb.contains(new PVector(entity.getX() + bb.getMaxX(),    entity.getY() + bb.getMaxY() + groundDist, entity.getZ() + bb.getMaxZ()))){
+				return grd;
+			}
+		}
+		return null;
 	}
 
 	/**
