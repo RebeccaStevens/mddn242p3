@@ -13,6 +13,7 @@ public class Level1 extends StandardLevel implements PConstants {
 	}
 
 	private void init() {
+		setDrawBoundingBoxes(true);
 		setCamera(new CameraStatic(this, 0, -500, 800, 0, 0, 0));
 		setGravity(1500);
 		

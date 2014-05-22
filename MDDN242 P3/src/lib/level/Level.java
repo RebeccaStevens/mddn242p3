@@ -15,9 +15,9 @@ public abstract class Level {
 	protected List<Entity> entities;
 	protected List<Ground> groundEntities;
 	
-	protected Camera camera;
+	private Camera camera;
 	
-	protected boolean drawBoundingBoxes;
+	private boolean drawBoundingBoxes;
 	
 	private PVector gravity;
 	private float airFriction;
@@ -47,6 +47,30 @@ public abstract class Level {
 	}
 	
 	/**
+	 * Update the level
+	 */
+	public void update(){
+		float timeStep = Time.getTimeStep();
+		camera.update(timeStep);
+		for(Entity e : entities){
+			e._update(timeStep);
+		}
+	}
+
+	/**
+	 * Draw the level.
+	 * @param g The graphics to draw to
+	 */
+	public void draw(PGraphics g){
+		g.pushMatrix();
+		camera.apply(g);
+		for(Entity e : entities){
+			e.draw(g);
+		}
+		g.popMatrix();
+	}
+
+	/**
 	 * Add an entity to the level.
 	 * (To be called from the Entity class)
 	 * @param entity
@@ -59,15 +83,13 @@ public abstract class Level {
 	}
 	
 	/**
-	 * Remove an entity from the level.
-	 * (To be called from the Entity class)
-	 * @param entity
+	 * Get the amount of air friction in the level.
+	 * @return
 	 */
-	void removeEntity(Entity entity){
-		entities.remove(entity);
-		groundEntities.remove(entity);
+	public float getAirFriction() {
+		return airFriction;
 	}
-	
+
 	/**
 	 * Get the gravity on the level.
 	 * @return
@@ -77,11 +99,81 @@ public abstract class Level {
 	}
 
 	/**
-	 * Get the amount of air friction in the level.
+	 * Detect if this entity is on the ground. If so, the ground object is returned.
+	 * Note: This method does collision detection.
+	 * @param entity The entity to test
+	 * @return the ground object or null if not on the ground
+	 * TODO increase efficiency
+	 */
+	Ground getGroundObject(Entity entity) {
+		if(entity.getCollisionGroup() == 0) return null;
+		for(Ground grd : groundEntities){
+			if(grd == entity) continue;
+			if(!needToCheckCollision(entity, grd)) continue;
+			BoundingBox thisbb = entity.getBoundingBox();
+			BoundingBox otherbb = ((Entity)grd).getBoundingBox();
+			float groundDist = 1F;
+			if(otherbb.contains(new PVector(entity.getX() + thisbb.getCenterX(), entity.getY() + thisbb.getMaxY() + groundDist, entity.getZ() + thisbb.getCenterZ()))
+			|| otherbb.contains(new PVector(entity.getX() + thisbb.getMinX(),    entity.getY() + thisbb.getMaxY() + groundDist, entity.getZ() + thisbb.getMinZ()))
+			|| otherbb.contains(new PVector(entity.getX() + thisbb.getMinX(),    entity.getY() + thisbb.getMaxY() + groundDist, entity.getZ() + thisbb.getMaxZ()))
+			|| otherbb.contains(new PVector(entity.getX() + thisbb.getMaxX(),    entity.getY() + thisbb.getMaxY() + groundDist, entity.getZ() + thisbb.getMinZ()))
+			|| otherbb.contains(new PVector(entity.getX() + thisbb.getMaxX(),    entity.getY() + thisbb.getMaxY() + groundDist, entity.getZ() + thisbb.getMaxZ()))){
+				return grd;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Return whether or not the given entity can move to the new location given without colliding with anything else.
+	 * Note: This method does collision detection.
+	 * @param entity The entity to move
+	 * @param newLocation The new location that this entity wants to move to
+	 * @return true if the entity can move to the new location without colliding with anything, otherwise false
+	 * TODO increase efficiency
+	 */
+	boolean canMove(Entity entity, PVector newLocation) {
+		if(entity.getCollisionGroup() == 0) return true;
+		for(Entity ent : entities){
+			if(ent == entity) continue;
+			if(!needToCheckCollision(entity, ent)) continue;
+			if(entity.getBoundingBox().intersects(ent.getBoundingBox(), newLocation)){
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Returns whether or not the level is 3D
 	 * @return
 	 */
-	public float getAirFriction() {
-		return airFriction;
+	public abstract boolean is3D();
+
+	/**
+	 * Get whether or not the bounding boxes of the entities are being drawn.
+	 * @return
+	 */
+	public final boolean isDrawBoundingBoxes(){
+		return drawBoundingBoxes;
+	}
+
+	/**
+	 * Set the amount of air friction in the level.
+	 * @param airFriction
+	 */
+	public void setAirFriction(float airFriction) {
+		this.airFriction = airFriction;
+	}
+
+	/**
+	 * Set the active camera used in the level.
+	 * @param camera
+	 */
+	public void setCamera(Camera camera){
+		this.camera.setLevel(null);
+		this.camera = camera;
+		this.camera.setLevel(this);
 	}
 
 	/**
@@ -112,47 +204,24 @@ public abstract class Level {
 	}
 	
 	/**
-	 * Set the amount of air friction in the level.
-	 * @param airFriction
+	 * Set whether or not to draw the bounding boxes of the entities in the level.
+	 * @param b
 	 */
-	public void setAirFriction(float airFriction) {
-		this.airFriction = airFriction;
+	public final void setDrawBoundingBoxes(boolean b){
+		drawBoundingBoxes = b;
 	}
-	
+
 	/**
-	 * Set the active camera used in the level.
-	 * @param camera
+	 * Remove an entity from the level.
+	 * (To be called from the Entity class)
+	 * @param entity
 	 */
-	public void setCamera(Camera camera){
-		this.camera.setLevel(null);
-		this.camera = camera;
-		this.camera.setLevel(this);
+	public void removeEntity(Entity entity){
+		entity.removeLevel();
+		entities.remove(entity);
+		groundEntities.remove(entity);
 	}
-	
-	/**
-	 * Update the level
-	 */
-	public void update(){
-		float timeStep = Time.getTimeStep();
-		camera.update(timeStep);
-		for(Entity e : entities){
-			e._update(timeStep);
-		}
-	}
-	
-	/**
-	 * Draw the level.
-	 * @param g The graphics to draw to
-	 */
-	public void draw(PGraphics g){
-		g.pushMatrix();
-		camera.apply(g);
-		for(Entity e : entities){
-			e.draw(g);
-		}
-		g.popMatrix();
-	}
-	
+
 	/**
 	 * Make this the active level
 	 */
@@ -160,74 +229,6 @@ public abstract class Level {
 		LibraryManager.getMe().setActiveLevel(this);
 	}
 	
-	/**
-	 * Get whether or not the bounding boxes of the entities are being drawn.
-	 * @return
-	 */
-	public final boolean isDrawBoundingBoxes(){
-		return drawBoundingBoxes;
-	}
-
-	/**
-	 * Set whether or not to draw the bounding boxes of the entities in the level.
-	 * @param b
-	 */
-	public final void setDrawBoundingBoxes(boolean b){
-		drawBoundingBoxes = b;
-	}
-	
-	/**
-	 * Returns whether or not the level is 3D
-	 * @return
-	 */
-	public abstract boolean is3D();
-
-	/**
-	 * Return whether or not the given entity can move to the new location given without colliding with anything else.
-	 * Note: This method does collision detection.
-	 * @param entity The entity to move
-	 * @param newLocation The new location that this entity wants to move to
-	 * @return true if the entity can move to the new location without colliding with anything, otherwise false
-	 * TODO increase efficiency
-	 */
-	boolean canMove(Entity entity, PVector newLocation) {
-		if(entity.getCollisionGroup() == 0) return true;
-		for(Entity ent : entities){
-			if(ent == entity) continue;
-			if(!needToCheckCollision(entity, ent)) continue;
-			if(entity.getBoundingBox().intersects(ent.getBoundingBox(), newLocation)){
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	/**
-	 * Detect if this entity is on the ground. If so, the ground object is returned.
-	 * Note: This method does collision detection.
-	 * @param entity The entity to test
-	 * @return the ground object or null if not on the ground
-	 * TODO increase efficiency
-	 */
-	Ground getGroundObject(Entity entity) {
-		if(entity.getCollisionGroup() == 0) return null;
-		for(Ground grd : groundEntities){
-			if(grd == entity) continue;
-			if(!needToCheckCollision(entity, grd)) continue;
-			BoundingBox bb = entity.getBoundingBox();
-			BoundingBox otherbb = ((Entity)grd).getBoundingBox();
-			float groundDist = 1F;
-			if(otherbb.contains(new PVector(entity.getX() + bb.getCenterX(), entity.getY() + bb.getMaxY() + groundDist, entity.getZ() + bb.getCenterZ()))
-			|| otherbb.contains(new PVector(entity.getX() + bb.getMinX(),    entity.getY() + bb.getMaxY() + groundDist, entity.getZ() + bb.getMinZ()))
-			|| otherbb.contains(new PVector(entity.getX() + bb.getMinX(),    entity.getY() + bb.getMaxY() + groundDist, entity.getZ() + bb.getMaxZ()))
-			|| otherbb.contains(new PVector(entity.getX() + bb.getMaxX(),    entity.getY() + bb.getMaxY() + groundDist, entity.getZ() + bb.getMinZ()))
-			|| otherbb.contains(new PVector(entity.getX() + bb.getMaxX(),    entity.getY() + bb.getMaxY() + groundDist, entity.getZ() + bb.getMaxZ()))){
-				return grd;
-			}
-		}
-		return null;
-	}
-
 	/**
 	 * Returns whether or not collision detection needs to be done between the two entities
 	 * @param entity1 The entity to check if it can collide with the other one

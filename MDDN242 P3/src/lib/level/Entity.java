@@ -104,12 +104,32 @@ public abstract class Entity {
 	}
 
 	/**
-	 * Set the level that this level is in
+	 * Set the level that this level is in.
 	 * @param level
 	 */
 	private void setLevel(Level level){
-		this.level = level;
-		level.addEntity(this);
+		if(level == null){
+			remove();
+		}
+		else{
+			this.level = level;
+			level.addEntity(this);
+		}
+	}
+	
+	/**
+	 * Remove this entity from the level it is in.
+	 */
+	public void remove(){
+		this.level.removeEntity(this);
+	}
+
+	/**
+	 * Set this entity's level to null.
+	 * To be called from level.
+	 */
+	void removeLevel() {
+		level = null;
 	}
 
 	/**
@@ -174,11 +194,14 @@ public abstract class Entity {
 			g.scale(scale.x, scale.y);
 		}
 		g.pushStyle();
+		g.noStroke();
 		draw(g, Time.getTimeStep());
 		g.popStyle();
+		g.pushStyle();
 		if(level.isDrawBoundingBoxes()){
 			drawBoundingBox(g);
 		}
+		g.popStyle();
 		g.popMatrix();
 	}
 	
@@ -194,10 +217,10 @@ public abstract class Entity {
 	 */
 	private void drawBoundingBox(PGraphics g) {
 		if(level.is3D()){
-			drawBoundingBox2D(g);
+			drawBoundingBox3D(g);
 		}
 		else{
-			drawBoundingBox3D(g);
+			drawBoundingBox2D(g);
 		}
 	}
 	
@@ -206,19 +229,16 @@ public abstract class Entity {
 	 * @param g The graphics object to draw to
 	 */
 	private void drawBoundingBox2D(PGraphics g) {
-		BoundingBox2D bb = (BoundingBox2D) boundingBox;
-		float bbx = bb.getCenterX();
-		float bby = bb.getCenterY();
-		float bbw = bb.getWidth();
-		float bbh = bb.getHeight();
+		float bbx = boundingBox.getCenterX();
+		float bby = boundingBox.getCenterY();
+		float bbw = boundingBox.getWidth();
+		float bbh = boundingBox.getHeight();
 		
-		g.pushStyle();
 		g.stroke(0xFFFF0000);
 		g.strokeWeight(bbw > 10 && bbh > 10 ? 3F : 1F);
 		g.noFill();
 		g.rectMode(PApplet.CORNER);
 		g.rect(bbx, bby, bbw, bbh);
-		g.popStyle();
 	}
 	
 	/**
@@ -226,8 +246,10 @@ public abstract class Entity {
 	 * @param g The graphics object to draw to
 	 */
 	private void drawBoundingBox3D(PGraphics g) {
-		// TODO Auto-generated method stub
-		
+		g.stroke(0xFFFF0000);
+		g.strokeWeight(1F);
+		g.noFill();
+		g.box(boundingBox.getWidth(), boundingBox.getHeight(), boundingBox.getDepth());
 	}
 	
 	private void groundDetection(){

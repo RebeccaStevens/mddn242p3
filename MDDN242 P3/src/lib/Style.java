@@ -16,7 +16,7 @@ public class Style {
 		stroke_color	= 0xFF000000;
 		strokeWeight	= 1;
 		noFill			= false;
-		noStroke		= false;
+		noStroke		= true;
 	}
 	
 	public void fill(int c){
