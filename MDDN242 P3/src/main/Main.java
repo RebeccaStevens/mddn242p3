@@ -1,6 +1,7 @@
 package main;
 
 import lib.LibraryManager;
+import main.input.ControllerInputManager;
 import main.model.levels.Level1;
 import processing.core.PApplet;
 
@@ -29,7 +30,7 @@ public class Main extends PApplet{
 	}
 	
 	public void update(){
-
+		ControllerInputManager.update();
 	}
 
 	@Override
@@ -47,6 +48,7 @@ public class Main extends PApplet{
 	}
 	
 	public static void main(String[] args){
+		ControllerInputManager.init();
 		PApplet.main(Main.class.getName());
 	}
 }
