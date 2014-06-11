@@ -7,8 +7,8 @@ import net.java.games.input.ControllerEnvironment;
 public class ControllerInputManager {
 	
 	private static Controller gameController;
-	private static AnalogStick analogStick1;
-	private static AnalogStick analogStick2;
+	private static AnalogStick analogStickL, analogStickR;
+	private static ControllerButton buttonR1, buttonL1;
 	
 	private ControllerInputManager(){}
 
@@ -21,8 +21,11 @@ public class ControllerInputManager {
 		}
 		if(gameController == null) return;
 		
-		analogStick1 = new AnalogStick(gameController.getComponent(Component.Identifier.Axis.X), gameController.getComponent(Component.Identifier.Axis.Y));
-		analogStick2 = new AnalogStick(gameController.getComponent(Component.Identifier.Axis.RX), gameController.getComponent(Component.Identifier.Axis.RY));
+		analogStickL = new AnalogStick(gameController.getComponent(Component.Identifier.Axis.X), gameController.getComponent(Component.Identifier.Axis.Y));
+		analogStickR = new AnalogStick(gameController.getComponent(Component.Identifier.Axis.RX), gameController.getComponent(Component.Identifier.Axis.RY));
+		
+		buttonL1 = new ControllerButton(gameController.getComponent(Component.Identifier.Button._4));
+		buttonR1 = new ControllerButton(gameController.getComponent(Component.Identifier.Button._5));
 	}
 	
 	public static boolean gameControllerExist(){
@@ -36,11 +39,25 @@ public class ControllerInputManager {
 		}
 	}
 	
-	public static AnalogStick getAnalogStick1(){
-		return analogStick1;
+	public static AnalogStick getAnalogStickL(){
+		return analogStickL;
 	}
 	
-	public static AnalogStick getAnalogStick2(){
-		return analogStick2;
+	public static AnalogStick getAnalogStickR(){
+		return analogStickR;
+	}
+
+	public static ControllerButton getButtonR1() {
+		return buttonR1;
+	}
+	
+	public static ControllerButton getButtonL1() {
+		return buttonL1;
+	}
+
+	public static void print() {
+		for(Component c : gameController.getComponents()){
+			System.out.println(c + ": " + c.getPollData());
+		}
 	}
 }

@@ -21,7 +21,7 @@ public abstract class Camera {
 		setLevel(level);
 	}
 	
-	public abstract void update(float delta);
+	public abstract void update(double delta);
 
 	void apply(PGraphics g){
 		if(getLevel().is3D()){

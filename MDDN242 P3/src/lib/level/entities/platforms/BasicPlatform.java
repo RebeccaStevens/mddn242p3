@@ -28,12 +28,12 @@ public class BasicPlatform extends Platform {
 	}
 
 	@Override
-	public void update(float delta) {
+	public void update(double delta) {
 		
 	}
 
 	@Override
-	public void draw(PGraphics g, float delta) {
+	public void draw(PGraphics g, double delta) {
 		if(getLevel().is3D()){
 			draw3D(g, delta);
 		}
@@ -42,12 +42,12 @@ public class BasicPlatform extends Platform {
 		}
 	}
 	
-	private void draw2D(PGraphics g, float delta) {
+	private void draw2D(PGraphics g, double delta) {
 		style.apply(g);
 		g.rect(0, 0, getWidth(), getHeight());
 	}
 	
-	private void draw3D(PGraphics g, float delta) {
+	private void draw3D(PGraphics g, double delta) {
 		style.apply(g);
 		g.box(getWidth(), getHeight(), getDepth());
 	}

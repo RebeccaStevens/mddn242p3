@@ -1,11 +1,10 @@
 package main.model.levels;
 
-import processing.core.PConstants;
 import lib.level.cameras.CameraFollowTwo;
-import lib.level.cameras.CameraStatic;
 import lib.level.entities.platforms.BasicPlatform;
-import main.model.entities.Player1;
-import main.model.entities.Player2;
+import main.model.entities.player.Player1;
+import main.model.entities.player.Player2;
+import processing.core.PConstants;
 
 public class Level1 extends StandardLevel implements PConstants {
 	
@@ -19,6 +18,8 @@ public class Level1 extends StandardLevel implements PConstants {
 		
 		player1 = new Player1(this, -100, -675, -100);
 		player2 = new Player2(this,  100, -690,  100);
+		player1.setOtherPlayer(player2);
+		player2.setOtherPlayer(player1);
 		
 		setCamera(new CameraFollowTwo(this, player1, player2, 0, -300, 500));
 		

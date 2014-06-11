@@ -1,8 +1,9 @@
 package lib.level.entities;
 
+import lib.level.Entity;
 import lib.level.Level;
 
-public abstract class Platform extends Ground {
+public abstract class Platform extends Entity {
 	
 	private float groundFriction;
 

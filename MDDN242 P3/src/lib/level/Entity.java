@@ -1,7 +1,9 @@
 package lib.level;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import lib.Time;
-import lib.level.entities.Ground;
 import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PVector;
@@ -24,10 +26,16 @@ public abstract class Entity {
 	
 	private Level level;
 	private boolean gravityEffected;
+	
 	private int collisionGroup;
 	private CollisionMode collisionMode;
+	private Set<Entity> collisionIgnore;
 	
-	private Ground ground;
+	private Entity ground;
+
+	private Entity attachedTo;
+	private Set<Entity> attachedEntities;
+	private Set<Entity> entitiesOnMe;
 	
 	enum CollisionMode{
 		GREATER_THAN_OR_EQUAL_TO, EQUAL_TO, LESS_THAN;
@@ -91,6 +99,10 @@ public abstract class Entity {
 		}
 		scale = new PVector(1, 1, 1);
 		
+		attachedEntities = new HashSet<Entity>();
+		entitiesOnMe = new HashSet<Entity>();
+		collisionIgnore = new HashSet<Entity>();
+		
 		mass = 1;
 		gravityEffected = false;
 		collisionGroup = 1;
@@ -137,24 +149,66 @@ public abstract class Entity {
 	 * This method calls the method: update(float delta)
 	 * @param delta The amount of game time that has passed since the last frame
 	 */
-	final void _update(float delta){
+	final void _update(double delta){
+		if(attachedTo != null) return;
 		update(delta);
 		applyMotionLimits();
-		move(delta);
+		
+		boolean allChildrenCanMove = true;
+		for(Entity ent : attachedEntities){
+			if(!ent.attachedUpdate(delta)) allChildrenCanMove = false;
+		}
+		
+		PVector oldLocation = getLocation();
+		PVector newLocation = move(delta);
+		
+		if(level.canMove(this, newLocation) && allChildrenCanMove){
+			location.set(newLocation);
+			PVector dl = PVector.sub(newLocation, oldLocation);
+			for(Entity ent : attachedEntities){
+				ent.location.add(dl);
+			}
+			for(Entity ent : entitiesOnMe){
+				ent.location.add(dl);
+			}
+		}
+		else{
+			velocity.mult(0);	// can't move? Set the velocity to 0
+		}
+		
 		applyLocationLimits();
 		groundDetection();
+	}
+	
+	private final boolean attachedUpdate(double delta){
+		assert(attachedTo == null);
+		update(delta);
+		
+		for(Entity ent : attachedEntities){
+			ent.attachedUpdate(delta);
+		}
+		for(Entity ent : entitiesOnMe){
+			ent.attachedUpdate(delta);
+		}
+		
+		velocity.mult(0);
+		
+		PVector newLocation = move(delta);
+		return level.canMove(this, newLocation);
 	}
 
 	/**
 	 * Update the entity.
 	 * @param delta The amount of game time that has passed since the last frame
 	 */
-	public abstract void update(float delta);
+	public abstract void update(double delta);
 	
 	/**
 	 * Move the entity.
+	 * @param delta The amount of game time that has passed since the last frame
+	 * @return The location that the entity will move to
 	 */
-	private void move(float delta){
+	protected PVector move(double delta){
 		boolean onGround = isOnGround();
 		
 		if(gravityEffected && !onGround){
@@ -164,14 +218,7 @@ public abstract class Entity {
 			applyAcceleration(0, 0, 0, ground.getGroundFriction());
 		}
 		
-		PVector newLocation = PVector.add(location, PVector.mult(velocity, delta));
-		
-		if(level.canMove(this, newLocation)){
-			location.set(newLocation);
-		}
-		else{
-			velocity.mult(0);	// can't move? Set the velocity to 0
-		}
+		return PVector.add(location, PVector.mult(velocity, (float) delta));
 	}
 	
 	/**
@@ -209,7 +256,7 @@ public abstract class Entity {
 	 * Draw the entity.
 	 * @param delta The amount of game time that has passed since the last frame
 	 */
-	public abstract void draw(PGraphics g, float delta);
+	public abstract void draw(PGraphics g, double delta);
 
 	/**
 	 * Draw a bounding box around the entity.
@@ -253,7 +300,16 @@ public abstract class Entity {
 	}
 	
 	private void groundDetection(){
-		ground = level.getGroundObject(this);
+		Entity lastGround = ground;
+		ground = level.getGround(this);
+		if(lastGround != ground){
+			if(lastGround != null) lastGround.takeOff(this);
+			if(ground != null) ground.putOn(this);
+		}
+	}
+	
+	public float getGroundFriction(){
+		return 10;
 	}
 	
 	/**
@@ -332,6 +388,18 @@ public abstract class Entity {
 		return accelerate(velocity, a, friction);
 	}
 	
+	public void addVelocity(float x, float y) {
+		addVelocity(new PVector(x, y, 0));
+	}
+	
+	public void addVelocity(float x, float y, float z) {
+		addVelocity(new PVector(x, y, z));
+	}
+	
+	public void addVelocity(PVector velocity) {
+		this.velocity.add(velocity);
+	}
+	
 	/**
 	 * Accelerate the given velocity by the given acceleration, applying the give amount of friction.
 	 * @param veloc The velocity to accelerate
@@ -341,18 +409,44 @@ public abstract class Entity {
 	 */
 	public static PVector accelerate(PVector velocity, PVector acceleration, float friction){
 		PVector delta;
-		float time_step = Time.getTimeStep();
+		double time_step = Time.getTimeStep();
 
 		  if (friction == 0) {
-		    delta = PVector.add(PVector.mult(velocity, time_step), PVector.mult(acceleration, 0.5F * time_step * time_step));
-		    velocity.add(PVector.mult(acceleration, time_step));
+		    delta = PVector.add(PVector.mult(velocity, (float) time_step), PVector.mult(acceleration, (float) (0.5F * time_step * time_step)));
+		    velocity.add(PVector.mult(acceleration, (float) time_step));
 		  } 
 		  else {
-		    delta = PVector.add(PVector.mult(acceleration, time_step / friction), PVector.mult(PVector.sub(velocity, PVector.div(acceleration, friction)), (float) ((1 - Math.exp(-friction * time_step)) / friction)));
+		    delta = PVector.add(PVector.mult(acceleration, (float) (time_step / friction)), PVector.mult(PVector.sub(velocity, PVector.div(acceleration, friction)), (float) ((1 - Math.exp(-friction * time_step)) / friction)));
 		    velocity.set(PVector.add(PVector.div(acceleration, friction), PVector.mult(PVector.sub(velocity, PVector.div(acceleration, friction)), (float) Math.exp(-friction * time_step))));
 		  }
 		  
 		  return delta;
+	}
+	
+	public void attach(Entity entity){
+		if(entity == this) throw new RuntimeException("Cannot attach an entity to itself.");
+		entity.deattach(this);
+		this.attachedEntities.add(entity);
+		this.ignoreInCollisions(entity);
+		entity.ignoreInCollisions(this);
+		entity.attachedTo = this;
+	}
+	
+	public void deattach(Entity entity){
+		this.attachedEntities.remove(entity);
+		this.unignoreInCollisions(entity);
+		entity.unignoreInCollisions(this);
+		entity.attachedTo = null;
+	}
+	
+	private void putOn(Entity entity){
+		assert(entity != this);
+		entity.takeOff(this);
+		this.entitiesOnMe.add(entity);
+	}
+	
+	private void takeOff(Entity entity){
+		this.entitiesOnMe.remove(entity);
 	}
 	
 	/**
@@ -571,6 +665,10 @@ public abstract class Entity {
 	 */
 	CollisionMode getCollisionMode() {
 		return collisionMode;
+	}
+	
+	Set<Entity> getCollisionIgnoreEntities(){
+		return collisionIgnore;
 	}
 
 	/**
@@ -840,6 +938,14 @@ public abstract class Entity {
 	public void setCollisionMode(int group, CollisionMode mode){
 		setCollisionGroup(group);
 		setCollisionMode(mode);
+	}
+	
+	public void ignoreInCollisions(Entity entity){
+		collisionIgnore.add(entity);
+	}
+	
+	public void unignoreInCollisions(Entity entity){
+		collisionIgnore.remove(entity);
 	}
 	
 	/**

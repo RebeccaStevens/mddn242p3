@@ -6,14 +6,12 @@ import java.util.List;
 import lib.LibraryManager;
 import lib.Time;
 import lib.level.cameras.CameraStatic;
-import lib.level.entities.Ground;
 import processing.core.PGraphics;
 import processing.core.PVector;
 
 public abstract class Level {
 
 	protected List<Entity> entities;
-	protected List<Ground> groundEntities;
 	
 	private Camera camera;
 	
@@ -35,7 +33,6 @@ public abstract class Level {
 	 */
 	public Level(Camera camera){
 		entities = new ArrayList<Entity>();
-		groundEntities = new ArrayList<Ground>();
 		if(camera == null){
 			this.camera = new CameraStatic(this);
 		}
@@ -50,7 +47,7 @@ public abstract class Level {
 	 * Update the level
 	 */
 	public void update(){
-		float timeStep = Time.getTimeStep();
+		double timeStep = Time.getTimeStep();
 		camera.update(timeStep);
 		for(Entity e : entities){
 			e._update(timeStep);
@@ -77,9 +74,6 @@ public abstract class Level {
 	 */
 	void addEntity(Entity entity){
 		entities.add(entity);
-		if(entity instanceof Ground){
-			groundEntities.add((Ground) entity);
-		}
 	}
 	
 	/**
@@ -105,20 +99,20 @@ public abstract class Level {
 	 * @return the ground object or null if not on the ground
 	 * TODO increase efficiency
 	 */
-	Ground getGroundObject(Entity entity) {
+	Entity getGround(Entity entity) {
 		if(entity.getCollisionGroup() == 0) return null;
-		for(Ground grd : groundEntities){
-			if(grd == entity) continue;
-			if(!needToCheckCollision(entity, grd)) continue;
+		for(Entity ent : entities){
+			if(ent == entity) continue;
+			if(!needToCheckCollision(entity, ent)) continue;
 			BoundingBox thisbb = entity.getBoundingBox();
-			BoundingBox otherbb = ((Entity)grd).getBoundingBox();
-			float groundDist = 1F;
+			BoundingBox otherbb = ent.getBoundingBox();
+			float groundDist = 1;//TODO extract
 			if(otherbb.contains(new PVector(entity.getX() + thisbb.getCenterX(), entity.getY() + thisbb.getMaxY() + groundDist, entity.getZ() + thisbb.getCenterZ()))
 			|| otherbb.contains(new PVector(entity.getX() + thisbb.getMinX(),    entity.getY() + thisbb.getMaxY() + groundDist, entity.getZ() + thisbb.getMinZ()))
 			|| otherbb.contains(new PVector(entity.getX() + thisbb.getMinX(),    entity.getY() + thisbb.getMaxY() + groundDist, entity.getZ() + thisbb.getMaxZ()))
 			|| otherbb.contains(new PVector(entity.getX() + thisbb.getMaxX(),    entity.getY() + thisbb.getMaxY() + groundDist, entity.getZ() + thisbb.getMinZ()))
 			|| otherbb.contains(new PVector(entity.getX() + thisbb.getMaxX(),    entity.getY() + thisbb.getMaxY() + groundDist, entity.getZ() + thisbb.getMaxZ()))){
-				return grd;
+				return ent;
 			}
 		}
 		return null;
@@ -219,7 +213,6 @@ public abstract class Level {
 	public void removeEntity(Entity entity){
 		entity.removeLevel();
 		entities.remove(entity);
-		groundEntities.remove(entity);
 	}
 
 	/**
@@ -237,6 +230,8 @@ public abstract class Level {
 	 */
 	private boolean needToCheckCollision(Entity entity1, Entity entity2) {
 		if(entity2.getCollisionGroup() == 0) return false;
+		
+		if(entity1.getCollisionIgnoreEntities().contains(entity2)) return false;
 		
 		switch(entity1.getCollisionMode()){
 		case EQUAL_TO:

@@ -1,8 +1,8 @@
 package main.model.levels;
 
 import lib.level.Level3D;
-import main.model.entities.Player1;
-import main.model.entities.Player2;
+import main.model.entities.player.Player1;
+import main.model.entities.player.Player2;
 
 public abstract class StandardLevel extends Level3D{
 
