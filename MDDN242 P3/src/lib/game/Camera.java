@@ -1,4 +1,4 @@
-package lib.level;
+package lib.game;
 
 import lib.LibraryManager;
 import processing.core.PApplet;

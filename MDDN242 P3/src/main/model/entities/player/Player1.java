@@ -1,8 +1,9 @@
 package main.model.entities.player;
 
 import lib.Key;
-import lib.level.Level;
+import lib.game.Level;
 import main.input.ControllerInputManager;
+import processing.core.PConstants;
 import processing.core.PGraphics;
 
 public class Player1 extends Player{
@@ -14,6 +15,7 @@ public class Player1 extends Player{
 		key_moveDown	= new Key('S');
 		key_moveLeft	= new Key('A');
 		key_moveRight	= new Key('D');
+		key_moveRun		= new Key(PConstants.SHIFT);
 		key_jump		= new Key('C');
 		key_duck		= new Key('Z');
 		
@@ -21,12 +23,14 @@ public class Player1 extends Player{
 			hasController = true;
 			ctrl_analogStick = ControllerInputManager.getAnalogStickL();
 			ctrl_jump = ControllerInputManager.getButtonL1();
+			ctrl_duck = ControllerInputManager.getButtonL2();
 		}
 		
-		walkForce = 50000;
-		jumpForce = -3000000;
+		moveForce = 50000;
+		jumpForce = -1800000;
 		
-		walkSpeed = 500;
+		walkSpeed = 150;
+		runSpeed = 500;
 	}
 
 	@Override

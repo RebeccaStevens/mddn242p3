@@ -1,4 +1,4 @@
-package lib.level;
+package lib.game;
 
 import processing.core.PVector;
 
@@ -12,11 +12,11 @@ abstract class BoundingBox {
 	
 	public abstract boolean contains(PVector point);
 	
-	public boolean contains(BoundingBox other) {
+	boolean contains(BoundingBox other) {
 		return contains(other, entity.getLocation());
 	}
 	
-	public boolean contains(BoundingBox other, PVector location) {
+	boolean contains(BoundingBox other, PVector location) {
 		if(other instanceof BoundingBox2D){
 			return contains((BoundingBox2D)other, location);
 		}
@@ -30,11 +30,11 @@ abstract class BoundingBox {
 
 	public abstract boolean contains(BoundingBox3D other, PVector location);
 	
-	public boolean intersects(BoundingBox other) {
+	boolean intersects(BoundingBox other) {
 		return intersects(other, entity.getLocation());
 	}
 	
-	public boolean intersects(BoundingBox other, PVector location) {
+	boolean intersects(BoundingBox other, PVector location) {
 		if(other instanceof BoundingBox2D){
 			return intersects((BoundingBox2D)other, location);
 		}
@@ -47,6 +47,10 @@ abstract class BoundingBox {
 	public abstract boolean intersects(BoundingBox2D other, PVector location);
 
 	public abstract boolean intersects(BoundingBox3D other, PVector location);
+	
+	public final void intersectsAny(){
+		
+	}
 
 	public abstract float getWidth();
 
@@ -71,4 +75,8 @@ abstract class BoundingBox {
 	public abstract float getMaxY();
 	
 	public abstract float getMaxZ();
+
+	final Entity getEntity() {
+		return entity;
+	}
 }

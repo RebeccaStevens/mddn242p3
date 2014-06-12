@@ -1,4 +1,4 @@
-package lib.level;
+package lib.game;
 
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;

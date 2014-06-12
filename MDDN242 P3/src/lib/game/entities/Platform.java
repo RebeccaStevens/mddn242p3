@@ -1,7 +1,7 @@
-package lib.level.entities;
+package lib.game.entities;
 
-import lib.level.Entity;
-import lib.level.Level;
+import lib.game.Entity;
+import lib.game.Level;
 
 public abstract class Platform extends Entity {
 	

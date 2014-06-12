@@ -1,7 +1,7 @@
-package lib.level.cameras;
+package lib.game.cameras;
 
-import lib.level.Camera;
-import lib.level.Level;
+import lib.game.Camera;
+import lib.game.Level;
 import processing.core.PVector;
 
 public class CameraStatic extends Camera {

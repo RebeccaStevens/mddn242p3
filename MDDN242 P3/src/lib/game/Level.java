@@ -1,11 +1,11 @@
-package lib.level;
+package lib.game;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import lib.LibraryManager;
 import lib.Time;
-import lib.level.cameras.CameraStatic;
+import lib.game.cameras.CameraStatic;
 import processing.core.PGraphics;
 import processing.core.PVector;
 
@@ -136,6 +136,20 @@ public abstract class Level {
 			}
 		}
 		return true;
+	}
+	
+	public final boolean collidesWithSomething(BoundingBox boundingBox) {
+		Entity entity = boundingBox.getEntity();
+		
+		if(entity.getCollisionGroup() == 0) return true;
+		for(Entity ent : entities){
+			if(ent == entity) continue;
+			if(!needToCheckCollision(entity, ent)) continue;
+			if(boundingBox.intersects(ent.getBoundingBox())){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

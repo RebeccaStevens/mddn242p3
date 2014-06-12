@@ -16,7 +16,7 @@ class PlayerStateFall extends PlayerState {
 	@Override
 	void update(double delta) {
 		PVector move = player.walkState.getWalkForce();
-		move.limit((float) (300 * delta));
+		move.limit((float) (200 * delta));
 		player.addVelocity(move);
 	}
 	

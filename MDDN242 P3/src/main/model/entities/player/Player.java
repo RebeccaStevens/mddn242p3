@@ -2,8 +2,8 @@ package main.model.entities.player;
 
 import processing.core.PVector;
 import lib.Key;
-import lib.level.Level;
-import lib.level.entities.Actor;
+import lib.game.Level;
+import lib.game.entities.Actor;
 import main.input.AnalogStick;
 import main.input.ControllerButton;
 
@@ -13,6 +13,7 @@ public abstract class Player extends Actor{
 	protected Key key_moveDown;
 	protected Key key_moveLeft;
 	protected Key key_moveRight;
+	protected Key key_moveRun;
 	protected Key key_jump;
 	protected Key key_duck;
 	
@@ -22,9 +23,11 @@ public abstract class Player extends Actor{
 	protected ControllerButton ctrl_duck;
 	protected ControllerButton ctrl_jump;
 
+	protected float moveSpeed;
 	protected float walkSpeed;
+	protected float runSpeed;
 	
-	protected float walkForce;
+	protected float moveForce;
 	protected float jumpForce;
 	
 	Player otherPlayer;
@@ -53,11 +56,9 @@ public abstract class Player extends Actor{
 	
 	@Override
 	protected PVector move(double delta) {
-		return state.move(delta);
-	}
-
-	protected PVector defaultMove(double delta) {
-		return super.move(delta);
+		PVector newLocation = super.move(delta);
+		if(state.canMove(newLocation)) return newLocation;
+		return getLocation();
 	}
 	
 	public void setOtherPlayer(Player otherPlayer){
@@ -65,8 +66,10 @@ public abstract class Player extends Actor{
 	}
 	
 	void setState(PlayerState state){
-		this.state.end();
-		this.state = state;
-		this.state.start();
+		if(state.canActivate()){
+			this.state.end();
+			this.state = state;
+			this.state.start();
+		}
 	}
 }

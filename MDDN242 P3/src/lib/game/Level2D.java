@@ -1,4 +1,4 @@
-package lib.level;
+package lib.game;
 
 import java.util.Collections;
 import java.util.Comparator;

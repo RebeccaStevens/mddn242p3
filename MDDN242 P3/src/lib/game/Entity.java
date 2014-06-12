@@ -1,4 +1,4 @@
-package lib.level;
+package lib.game;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -388,16 +388,28 @@ public abstract class Entity {
 		return accelerate(velocity, a, friction);
 	}
 	
+	public void addLocation(float x, float y) {
+		addLocation(x, y, 0);
+	}
+	
+	public void addLocation(float x, float y, float z) {
+		addLocation(new PVector(x, y, z));
+	}
+	
+	public void addLocation(PVector dLocation) {
+		this.location.add(dLocation);
+	}
+	
 	public void addVelocity(float x, float y) {
-		addVelocity(new PVector(x, y, 0));
+		addVelocity(x, y, 0);
 	}
 	
 	public void addVelocity(float x, float y, float z) {
 		addVelocity(new PVector(x, y, z));
 	}
 	
-	public void addVelocity(PVector velocity) {
-		this.velocity.add(velocity);
+	public void addVelocity(PVector dVelocity) {
+		this.velocity.add(dVelocity);
 	}
 	
 	/**
@@ -938,6 +950,18 @@ public abstract class Entity {
 	public void setCollisionMode(int group, CollisionMode mode){
 		setCollisionGroup(group);
 		setCollisionMode(mode);
+	}
+	
+	public void setBoundingBox3D(BoundingBox3D boundingBox) {
+		if(boundingBox == null) throw new IllegalArgumentException("Cannot set an entity's bounding box to null.");
+		if(!level.is3D()) throw new UnsupportedOperationException("Cannot use a 3D bounding box in a 2D level.");
+		this.boundingBox = boundingBox;
+	}
+	
+	public void setBoundingBox2D(BoundingBox2D boundingBox) {
+		if(boundingBox == null) throw new IllegalArgumentException("Cannot set an entity's bounding box to null.");
+		if(level.is3D()) throw new UnsupportedOperationException("Cannot use a 2D bounding box in a 3D level.");
+		this.boundingBox = boundingBox;
 	}
 	
 	public void ignoreInCollisions(Entity entity){

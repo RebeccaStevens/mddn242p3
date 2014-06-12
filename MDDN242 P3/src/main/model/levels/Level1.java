@@ -1,7 +1,7 @@
 package main.model.levels;
 
-import lib.level.cameras.CameraFollowTwo;
-import lib.level.entities.platforms.BasicPlatform;
+import lib.game.cameras.CameraFollowTwo;
+import lib.game.entities.platforms.BasicPlatform;
 import main.model.entities.player.Player1;
 import main.model.entities.player.Player2;
 import processing.core.PConstants;

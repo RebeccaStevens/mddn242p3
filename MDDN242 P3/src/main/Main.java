@@ -18,7 +18,7 @@ public class Main extends PApplet{
 	
 	@Override
 	public void init(){
-		frame.setTitle("by Mike Stevens");
+		frame.setTitle("Untitled by Mike Stevens");
 		super.init();
 	}
 
@@ -50,5 +50,10 @@ public class Main extends PApplet{
 	public static void main(String[] args){
 		ControllerInputManager.init();
 		PApplet.main(Main.class.getName());
+	}
+	
+	@Override
+	public void keyPressed() {
+		System.out.println(keyCode);
 	}
 }

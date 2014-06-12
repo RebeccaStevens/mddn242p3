@@ -1,6 +1,6 @@
 package main.model.levels;
 
-import lib.level.Level3D;
+import lib.game.Level3D;
 import main.model.entities.player.Player1;
 import main.model.entities.player.Player2;
 

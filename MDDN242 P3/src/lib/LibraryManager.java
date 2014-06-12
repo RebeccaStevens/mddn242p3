@@ -1,6 +1,6 @@
 package lib;
 
-import lib.level.Level;
+import lib.game.Level;
 import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.event.KeyEvent;

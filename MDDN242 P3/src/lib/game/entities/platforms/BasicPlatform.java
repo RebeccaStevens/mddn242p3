@@ -1,8 +1,8 @@
-package lib.level.entities.platforms;
+package lib.game.entities.platforms;
 
 import lib.Style;
-import lib.level.Level;
-import lib.level.entities.Platform;
+import lib.game.Level;
+import lib.game.entities.Platform;
 import processing.core.PGraphics;
 
 public class BasicPlatform extends Platform {

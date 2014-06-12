@@ -10,9 +10,26 @@ abstract class PlayerState {
 		this.player = player;
 	}
 	
+	boolean canActivate() {
+		return true;
+	}
+
+	void start() {
+		
+	}
+	
+	void end() {
+		
+	}
+	
 	void updateState(){
 		if(player.isOnGround()){
-			player.setState(player.walkState);
+			if(player.key_duck.isPressed() || (player.hasController && player.ctrl_duck.isPressed())){
+				player.setState(player.duckState);
+			}
+			else{
+				player.setState(player.walkState);
+			}
 		}
 		else{
 			player.setState(player.fallState);
@@ -23,15 +40,7 @@ abstract class PlayerState {
 		
 	}
 	
-	PVector move(double delta) {
-		return player.defaultMove(delta);
-	}
-
-	void start() {
-		
-	}
-	
-	void end() {
-		
+	boolean canMove(PVector newLocation) {
+		return true;
 	}
 }

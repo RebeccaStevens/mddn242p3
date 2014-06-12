@@ -1,9 +1,9 @@
-package lib.level.cameras;
+package lib.game.cameras;
 
 import processing.core.PVector;
-import lib.level.Camera;
-import lib.level.Entity;
-import lib.level.Level;
+import lib.game.Camera;
+import lib.game.Entity;
+import lib.game.Level;
 
 public class CameraFollowTwo extends Camera {
 
