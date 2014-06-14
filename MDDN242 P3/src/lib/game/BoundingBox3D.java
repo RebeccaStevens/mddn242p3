@@ -117,5 +117,4 @@ public class BoundingBox3D extends BoundingBox {
 	public float getMaxZ() {
 		return maxLocation.z;
 	}
-
 }

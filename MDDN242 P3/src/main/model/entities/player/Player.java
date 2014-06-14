@@ -49,15 +49,16 @@ public abstract class Player extends Actor{
 	}
 
 	@Override
-	public void update(double delta) {
+	public void update(float delta) {
 		state.updateState();
 		state.update(delta);
 	}
 	
 	@Override
-	protected PVector move(double delta) {
-		PVector newLocation = super.move(delta);
+	protected PVector getMoveToLocation(float delta) {
+		PVector newLocation = super.getMoveToLocation(delta);
 		if(state.canMove(newLocation)) return newLocation;
+		setVelocity(0, 0, 0);
 		return getLocation();
 	}
 	

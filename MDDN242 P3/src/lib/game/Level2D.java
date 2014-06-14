@@ -5,7 +5,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Level2D extends Level {
+public abstract class Level2D extends Level {
 
 	private boolean entitiesNeedResorting;
 	private Map<Entity, Float> entityLayer;
@@ -21,7 +21,7 @@ public class Level2D extends Level {
 	}
 	
 	@Override
-	public void update(){
+	public void update(float delta){
 		if(entitiesNeedResorting){
 			Collections.sort(entities, new Comparator<Entity>(){
 				@Override
@@ -35,7 +35,7 @@ public class Level2D extends Level {
 			});
 			entitiesNeedResorting = false;
 		}
-		super.update();
+		super.update(delta);
 	}
 
 	@Override

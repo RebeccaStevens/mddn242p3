@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lib.LibraryManager;
-import lib.Time;
 import lib.game.cameras.CameraStatic;
 import processing.core.PGraphics;
 import processing.core.PVector;
@@ -12,6 +11,7 @@ import processing.core.PVector;
 public abstract class Level {
 
 	protected List<Entity> entities;
+	protected List<Light> lights;
 	
 	private Camera camera;
 	
@@ -33,6 +33,7 @@ public abstract class Level {
 	 */
 	public Level(Camera camera){
 		entities = new ArrayList<Entity>();
+		lights = new ArrayList<Light>();
 		if(camera == null){
 			this.camera = new CameraStatic(this);
 		}
@@ -46,26 +47,34 @@ public abstract class Level {
 	/**
 	 * Update the level
 	 */
-	public void update(){
-		double timeStep = Time.getTimeStep();
-		camera.update(timeStep);
+	public void update(float delta){
+		camera.update(delta);
 		for(Entity e : entities){
-			e._update(timeStep);
+			e._update(delta);
 		}
+	}
+
+	/**
+	 * Display the level.
+	 * @param g The graphics to draw to
+	 */
+	public void display(PGraphics g) {
+		g.pushMatrix();
+		camera.apply(g);
+		for(Light l : lights){
+			l.apply(g);
+		}
+		for(Entity e : entities){
+			e.draw(g);
+		}
+		g.popMatrix();
 	}
 
 	/**
 	 * Draw the level.
 	 * @param g The graphics to draw to
 	 */
-	public void draw(PGraphics g){
-		g.pushMatrix();
-		camera.apply(g);
-		for(Entity e : entities){
-			e.draw(g);
-		}
-		g.popMatrix();
-	}
+	public abstract void draw(PGraphics g);
 
 	/**
 	 * Add an entity to the level.
@@ -74,6 +83,10 @@ public abstract class Level {
 	 */
 	void addEntity(Entity entity){
 		entities.add(entity);
+	}
+	
+	void addLight(Light light){
+		lights.add(light);
 	}
 	
 	/**
@@ -119,26 +132,25 @@ public abstract class Level {
 	}
 
 	/**
-	 * Return whether or not the given entity can move to the new location given without colliding with anything else.
 	 * Note: This method does collision detection.
 	 * @param entity The entity to move
 	 * @param newLocation The new location that this entity wants to move to
-	 * @return true if the entity can move to the new location without colliding with anything, otherwise false
+	 * @return the entity that this entity will collide with if it move to the new location
 	 * TODO increase efficiency
 	 */
-	boolean canMove(Entity entity, PVector newLocation) {
-		if(entity.getCollisionGroup() == 0) return true;
+	Entity canMove(Entity entity, PVector newLocation) {
+		if(entity.getCollisionGroup() == 0) return null;
 		for(Entity ent : entities){
 			if(ent == entity) continue;
 			if(!needToCheckCollision(entity, ent)) continue;
 			if(entity.getBoundingBox().intersects(ent.getBoundingBox(), newLocation)){
-				return false;
+				return ent;
 			}
 		}
-		return true;
+		return null;
 	}
 	
-	public final boolean collidesWithSomething(BoundingBox boundingBox) {
+	final boolean collidesWithSomething(BoundingBox boundingBox) {
 		Entity entity = boundingBox.getEntity();
 		
 		if(entity.getCollisionGroup() == 0) return true;
@@ -227,6 +239,11 @@ public abstract class Level {
 	public void removeEntity(Entity entity){
 		entity.removeLevel();
 		entities.remove(entity);
+	}
+	
+	public void removeLight(Light light){
+		light.removeLevel();
+		lights.remove(light);
 	}
 
 	/**

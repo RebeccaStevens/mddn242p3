@@ -42,6 +42,14 @@ class PlayerStateWalk extends PlayerState {
 			move.normalize();
 			player.moveSpeed = player.key_moveRun.isPressed() ? player.runSpeed : player.walkSpeed;
 		}
+		
+		if(player.getClass()==Player1.class && player.otherPlayer.getGroundEntity() == player){
+			player.moveSpeed = player.moveSpeed * 0.4F;
+		}
+		else if(player.getClass()==Player2.class && player.otherPlayer.getGroundEntity() == player){
+			player.moveSpeed = player.moveSpeed * 0.05F;
+		}
+		
 		move.mult(player.moveForce);
 		return move;
 	}

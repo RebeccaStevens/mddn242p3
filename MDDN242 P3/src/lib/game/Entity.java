@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import lib.Time;
+import lib.game.entities.PushableEntity;
 import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PVector;
@@ -116,7 +117,7 @@ public abstract class Entity {
 	}
 
 	/**
-	 * Set the level that this level is in.
+	 * Set the level that this entity is in.
 	 * @param level
 	 */
 	private void setLevel(Level level){
@@ -140,7 +141,7 @@ public abstract class Entity {
 	 * Set this entity's level to null.
 	 * To be called from level.
 	 */
-	void removeLevel() {
+	final void removeLevel() {
 		level = null;
 	}
 
@@ -149,66 +150,109 @@ public abstract class Entity {
 	 * This method calls the method: update(float delta)
 	 * @param delta The amount of game time that has passed since the last frame
 	 */
-	final void _update(double delta){
+	final void _update(float delta){
 		if(attachedTo != null) return;
 		update(delta);
 		applyMotionLimits();
 		
 		boolean allChildrenCanMove = true;
 		for(Entity ent : attachedEntities){
-			if(!ent.attachedUpdate(delta)) allChildrenCanMove = false;
+			if(!ent.updateAttached(delta)) allChildrenCanMove = false;
 		}
+
+		PVector currentLocation = getLocation();
+		PVector newLocation = getMoveToLocation(delta);
 		
-		PVector oldLocation = getLocation();
-		PVector newLocation = move(delta);
-		
-		if(level.canMove(this, newLocation) && allChildrenCanMove){
-			location.set(newLocation);
-			PVector dl = PVector.sub(newLocation, oldLocation);
-			for(Entity ent : attachedEntities){
-				ent.location.add(dl);
+		if(allChildrenCanMove){
+			if(!move(newLocation, currentLocation)){
+				if(!move(new PVector(newLocation.x, currentLocation.y, currentLocation.z), currentLocation)){ velocity.x = 0; }
+				if(!move(new PVector(currentLocation.x, currentLocation.y, newLocation.z), currentLocation)){ velocity.z = 0; }
+				if(!move(new PVector(currentLocation.x, newLocation.y, currentLocation.z), currentLocation)){ velocity.y = 0; }
 			}
-			for(Entity ent : entitiesOnMe){
-				ent.location.add(dl);
-			}
-		}
-		else{
-			velocity.mult(0);	// can't move? Set the velocity to 0
 		}
 		
 		applyLocationLimits();
 		groundDetection();
-	}
-	
-	private final boolean attachedUpdate(double delta){
-		assert(attachedTo == null);
-		update(delta);
-		
-		for(Entity ent : attachedEntities){
-			ent.attachedUpdate(delta);
-		}
-		for(Entity ent : entitiesOnMe){
-			ent.attachedUpdate(delta);
-		}
-		
-		velocity.mult(0);
-		
-		PVector newLocation = move(delta);
-		return level.canMove(this, newLocation);
 	}
 
 	/**
 	 * Update the entity.
 	 * @param delta The amount of game time that has passed since the last frame
 	 */
-	public abstract void update(double delta);
+	public abstract void update(float delta);
+
+	private final boolean updateAttached(float delta){
+		assert(attachedTo == null);
+		update(delta);
+		
+		for(Entity ent : attachedEntities){
+			ent.updateAttached(delta);
+		}
+		
+		velocity.mult(0);
+		
+		PVector newLocation = getMoveToLocation(delta);
+		return level.canMove(this, newLocation) == null;
+	}
+
+	/**
+	 * Try and move this entity to the given location
+	 * @param newLocation
+	 * @return whether or not the move was successful
+	 */
+	private boolean move(PVector newLocation, PVector currentLocation) {
+		Entity willCollideWith = level.canMove(this, newLocation);
+		
+		PVector dLocation = PVector.sub(newLocation, currentLocation);
+		
+		if(willCollideWith != null && willCollideWith instanceof PushableEntity){
+			return moveAndPush((PushableEntity) willCollideWith, newLocation, dLocation);
+		}
+		else if(willCollideWith != null){
+			return false;
+		}
+		
+		moveNow(newLocation, dLocation);
+		return true;
+	}
+
+	private void moveNow(PVector newLocation, PVector dLocation) {
+		location.set(newLocation);
+		for(Entity ent : attachedEntities){
+			ent.location.add(dLocation);
+		}
+		for(Entity ent : entitiesOnMe){
+			ent.location.add(dLocation);
+		}
+	}
 	
+	private boolean moveAndPush(PushableEntity pushee, PVector newLocation, PVector dLocation) {
+		float resistance = pushee.getResistance();
+		PVector pusheeDLocation = PVector.mult(dLocation, 1-resistance);
+		PVector pusheeNewLocation = PVector.add(pushee.getLocation(), pusheeDLocation);
+		
+		if(level.canMove(pushee, pusheeNewLocation) != null) {
+			return false;
+		}
+
+		dLocation.sub(pusheeDLocation);
+		newLocation.sub(pusheeDLocation);
+		
+		((Entity)(pushee)).moveNow(pusheeNewLocation, pusheeDLocation);
+		this.moveNow(newLocation, dLocation);
+		
+		this.velocity.mult(1-resistance);
+		((Entity)(pushee)).velocity.add(this.velocity);
+		
+		return true;
+	}
+
 	/**
 	 * Move the entity.
 	 * @param delta The amount of game time that has passed since the last frame
 	 * @return The location that the entity will move to
 	 */
-	protected PVector move(double delta){
+	protected PVector getMoveToLocation(float delta){
 		boolean onGround = isOnGround();
 		
 		if(gravityEffected && !onGround){
@@ -256,7 +300,7 @@ public abstract class Entity {
 	 * Draw the entity.
 	 * @param delta The amount of game time that has passed since the last frame
 	 */
-	public abstract void draw(PGraphics g, double delta);
+	public abstract void draw(PGraphics g, float delta);
 
 	/**
 	 * Draw a bounding box around the entity.
@@ -421,7 +465,7 @@ public abstract class Entity {
 	 */
 	public static PVector accelerate(PVector velocity, PVector acceleration, float friction){
 		PVector delta;
-		double time_step = Time.getTimeStep();
+		float time_step = Time.getTimeStep();
 
 		  if (friction == 0) {
 		    delta = PVector.add(PVector.mult(velocity, (float) time_step), PVector.mult(acceleration, (float) (0.5F * time_step * time_step)));
@@ -451,14 +495,23 @@ public abstract class Entity {
 		entity.attachedTo = null;
 	}
 	
+	/**
+	 * Put on to me
+	 * @param entity
+	 */
 	private void putOn(Entity entity){
 		assert(entity != this);
-		entity.takeOff(this);
+		entity.entitiesOnMe.remove(this);
 		this.entitiesOnMe.add(entity);
 	}
 	
+	/**
+	 * Take off of me
+	 * @param entity
+	 */
 	private void takeOff(Entity entity){
 		this.entitiesOnMe.remove(entity);
+		entity.velocity.add(this.velocity);
 	}
 	
 	/**
@@ -635,6 +688,10 @@ public abstract class Entity {
 	 */
 	public float getMass() {
 		return mass;
+	}
+	
+	public Entity getGroundEntity() {
+		return ground;
 	}
 	
 	/**

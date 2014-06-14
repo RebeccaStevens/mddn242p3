@@ -6,8 +6,14 @@ abstract class BoundingBox {
 
 	protected Entity entity;
 
-	BoundingBox(Entity ent){
-		this.entity = ent;
+	/**
+	 * A BoundingBox must be attached to an entity.
+	 * However, that entity does not need have this BoundingBox as its bounding box.
+	 * @param entity The entity this will be attached to
+	 */
+	BoundingBox(Entity entity){
+		if(entity == null) throw new IllegalArgumentException("A BoundingBox must be attached to an entity.");
+		this.entity = entity;
 	}
 	
 	public abstract boolean contains(PVector point);
@@ -78,5 +84,9 @@ abstract class BoundingBox {
 
 	final Entity getEntity() {
 		return entity;
+	}
+	
+	public final boolean collidesWithSomething() {
+		return entity.getLevel().collidesWithSomething(this);
 	}
 }

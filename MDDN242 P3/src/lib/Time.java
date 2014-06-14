@@ -6,8 +6,8 @@ public class Time {
 	
 	private static Time me;
 	
-	private double timeStep, timeFrame, timeFactor;
-	private double timeStamp;
+	private float timeStep, timeFrame, timeFactor;
+	private float timeStamp;
 
 	Time(PApplet papplet){
 		me = this;
@@ -24,19 +24,19 @@ public class Time {
 		me.timeStamp = newTimeStamp;
 	}
 	
-	public static double getTimeStep(){
+	public static float getTimeStep(){
 		return me.timeStep / 1000;
 	}
 	
-	public static double getTimeFrame(){
+	public static float getTimeFrame(){
 		return me.timeFrame / 1000;
 	}
 	
-	public static double getTimeFactor(){
+	public static float getTimeFactor(){
 		return me.timeFactor;
 	}
 	
-	public static double getTimeStamp(){
+	public static float getTimeStamp(){
 		return me.timeStamp / 1000;
 	}
 	

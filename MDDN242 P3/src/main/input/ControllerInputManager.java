@@ -14,22 +14,41 @@ public class ControllerInputManager {
 
 	public static void init(){
 		for(Controller c : ControllerEnvironment.getDefaultEnvironment().getControllers()){
-			if(c.getType() == Controller.Type.GAMEPAD || c.getType() == Controller.Type.STICK){
+			if(isXBoxController(c)){
+				initXBox360(c);
+				return;
+			}
+			if(isPS2Controller(c)){
+				initPS2(c);
+				return;
+			}
+			if(gameController == null && (c.getType() == Controller.Type.GAMEPAD || c.getType() == Controller.Type.STICK)){
 				gameController = c;
-				break;
 			}
 		}
+		
 		if(gameController == null) return;
+		// There is a controller but it's not a xbox 360 or PS2 controller
 		
 		if(gameController.getType() == Controller.Type.GAMEPAD){
-			initXBox360();
+			initXBox360(gameController);
 		}
 		else if(gameController.getType() == Controller.Type.STICK){
-			initPS2();
+			initPS2(gameController);
 		}
 	}
 	
-	private static void initXBox360(){
+	private static boolean isXBoxController(Controller controller){
+		return controller.getType() == Controller.Type.GAMEPAD && controller.getName().equals("Controller (XBOX 360 For Windows)");
+	}
+	
+	private static boolean isPS2Controller(Controller controller){
+		return controller.getType() == Controller.Type.STICK && controller.getName().equals("Twin USB Joystick");
+	}
+	
+	private static void initXBox360(Controller controller){
+		gameController = controller;
+		
 		analogStickL = new AnalogStick(gameController.getComponent(Component.Identifier.Axis.X), gameController.getComponent(Component.Identifier.Axis.Y));
 		analogStickR = new AnalogStick(gameController.getComponent(Component.Identifier.Axis.RX), gameController.getComponent(Component.Identifier.Axis.RY));
 		
@@ -40,7 +59,9 @@ public class ControllerInputManager {
 		buttonR2 = new ControllerButton(gameController.getComponent(Component.Identifier.Axis.Z), true);
 	}
 	
-	private static void initPS2(){
+	private static void initPS2(Controller controller){
+		gameController = controller;
+		
 		analogStickL = new AnalogStick(gameController.getComponent(Component.Identifier.Axis.X), gameController.getComponent(Component.Identifier.Axis.Y));
 		analogStickR = new AnalogStick(gameController.getComponent(Component.Identifier.Axis.RZ), gameController.getComponent(Component.Identifier.Axis.Z));
 		

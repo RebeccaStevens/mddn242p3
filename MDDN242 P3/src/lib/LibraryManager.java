@@ -40,7 +40,7 @@ public class LibraryManager {
 	private void update(){
 		Time.update(sketch);
 		if(activeLevel != null){
-			activeLevel.update();
+			activeLevel.update(Time.getTimeStep());
 		}
 	}
 	
@@ -56,9 +56,14 @@ public class LibraryManager {
 		g.imageMode(PApplet.CENTER);
 		if(activeLevel != null){
 			background.draw(g);
-			activeLevel.draw(g);
+			activeLevel.display(g);
 		}
 		g.popStyle();
+		if(activeLevel != null){
+			g.pushStyle();
+			activeLevel.draw(g);
+			g.popStyle();
+		}
 	}
 
 	public void keyEvent(KeyEvent e){

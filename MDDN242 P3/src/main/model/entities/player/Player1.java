@@ -34,7 +34,7 @@ public class Player1 extends Player{
 	}
 
 	@Override
-	public void draw(PGraphics g, double delta) {
+	public void draw(PGraphics g, float delta) {
 		g.box(getWidth(), getHeight(), getDepth());
 	}
 
