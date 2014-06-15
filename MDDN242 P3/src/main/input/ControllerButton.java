@@ -6,6 +6,11 @@ public class ControllerButton {
 	
 	private Component component;
 	private boolean inverse;
+	
+	private Runnable event;
+	
+	private boolean pressed;
+	private boolean pPressed;
 
 	public ControllerButton(Component component){
 		this(component, false);
@@ -17,6 +22,18 @@ public class ControllerButton {
 	}
 
 	public boolean isPressed(){
-		return inverse ? component.getPollData() < -0.5F : component.getPollData() > 0.5F;
+		return pressed;
+	}
+
+	public void onPress(Runnable event) {
+		this.event = event;
+	}
+	
+	public void update(){
+		pPressed = pressed;
+		pressed =  inverse ? component.getPollData() < -0.5F : component.getPollData() > 0.5F;
+		if(!pPressed && pressed && event!=null){
+			event.run();
+		}
 	}
 }

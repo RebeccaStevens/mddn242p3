@@ -1,7 +1,7 @@
 package main.model.entities.player;
 
-import lib.Key;
-import lib.game.Level;
+import gamelib.Key;
+import gamelib.game.Level;
 import main.input.ControllerInputManager;
 import processing.core.PConstants;
 import processing.core.PGraphics;
@@ -9,7 +9,7 @@ import processing.core.PGraphics;
 public class Player1 extends Player{
 
 	public Player1(Level level, float x, float y, float z) {
-		super(level, x, y, z, 70, 150, 70, 7);
+		super(level, x, y, z, 70, 150, 70, 7, 0xFFFF0000);
 
 		key_moveUp		= new Key('W');
 		key_moveDown	= new Key('S');
@@ -29,12 +29,13 @@ public class Player1 extends Player{
 		moveForce = 50000;
 		jumpForce = -1800000;
 		
-		walkSpeed = 150;
+		walkSpeed = 200;
 		runSpeed = 500;
 	}
 
 	@Override
 	public void draw(PGraphics g, float delta) {
+		g.fill(color);
 		g.box(getWidth(), getHeight(), getDepth());
 	}
 

@@ -1,8 +1,8 @@
 package main.model.levels;
 
+import gamelib.Time;
+import gamelib.game.Level3D;
 import processing.core.PGraphics;
-import lib.Time;
-import lib.game.Level3D;
 import main.model.entities.player.Player1;
 import main.model.entities.player.Player2;
 
@@ -10,6 +10,11 @@ public abstract class StandardLevel extends Level3D{
 
 	protected static final float TIME_FROM_LOSE_UNTIL_RESTART = 1.5F;
 	protected static final float START_FADE_IN_TIME = 1F;
+	
+	protected final gamelib.Style groundStyle = new gamelib.Style();
+	protected final gamelib.Style pushableStyle = new gamelib.Style();
+	protected final gamelib.Style floatStyle = new gamelib.Style();
+	protected final gamelib.Style buttonStyle = new gamelib.Style();
 	
 	protected Player1 player1;
 	protected Player2 player2;
@@ -24,7 +29,17 @@ public abstract class StandardLevel extends Level3D{
 	private float timeSinceStateLastChanged;
 	
 	public StandardLevel(){
+		groundStyle.fill(0xFFa0e664);
+		groundStyle.noStroke();
 		
+		pushableStyle.fill(0xFF14b4ff);
+		pushableStyle.noStroke();
+		
+		floatStyle.fill(0xB0000000);
+		floatStyle.noStroke();
+		
+		buttonStyle.fill(0xFFDD66FF);
+		buttonStyle.noStroke();
 	}
 
 	@Override
@@ -47,7 +62,6 @@ public abstract class StandardLevel extends Level3D{
 	}
 
 	protected void changeState(State newState) {
-		System.out.println(newState);
 		state = newState;
 		stateLastChanged = Time.getTimeStamp();
 	}

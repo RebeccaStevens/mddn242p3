@@ -1,9 +1,9 @@
 package main.model.entities.player;
 
+import gamelib.game.BoundingBox3D;
 import processing.core.PVector;
-import lib.game.BoundingBox3D;
 
-class PlayerStateDuck extends PlayerState {
+class PlayerStateDuck extends PlayerStateWalk {
 
 	private BoundingBox3D originalBoundingBox, newBoundingBox;
 	private PVector offset;
@@ -17,9 +17,31 @@ class PlayerStateDuck extends PlayerState {
 	
 	@Override
 	boolean canActivate(){
-		BoundingBox3D cbb = player.getBoundingBox3D();
-		BoundingBox3D nbb = new BoundingBox3D(player, cbb.getWidth()*sizeMultiplier.x, cbb.getHeight()*sizeMultiplier.y, cbb.getDepth()*sizeMultiplier.z);
-		return !nbb.collidesWithSomething();
+		BoundingBox3D bb = player.getBoundingBox3D();
+		BoundingBox3D nbb = new BoundingBox3D(player, bb.getWidth()*sizeMultiplier.x, bb.getHeight()*sizeMultiplier.y, bb.getDepth()*sizeMultiplier.z);
+		
+		player.setBoundingBox3D(nbb);
+		player.addLocation(offset);
+		
+		boolean b = !player.getBoundingBox3D().collidesWithSomething();
+		
+		player.setBoundingBox3D(bb);
+		player.addLocation(PVector.mult(offset, -1));
+		return b;
+	}
+	BoundingBox3D temp;
+	@Override
+	boolean canDeactivate() {
+		BoundingBox3D bb = player.getBoundingBox3D();
+		
+		player.setBoundingBox3D(originalBoundingBox);
+		player.addLocation(PVector.mult(offset, -1));
+		
+		boolean b = !player.getBoundingBox3D().collidesWithSomething();
+		
+		player.setBoundingBox3D(bb);
+		player.addLocation(offset);
+		return b;
 	}
 	
 	@Override
@@ -36,6 +58,13 @@ class PlayerStateDuck extends PlayerState {
 	void end() {
 		player.setBoundingBox3D(originalBoundingBox);
 		player.addLocation(PVector.mult(offset, -1));
+	}
+	
+	@Override
+	void update(double delta) {
+		PVector move = player.walkState.getWalkForce();
+		move.mult((float) (500 * delta));
+		player.addVelocity(move);
 	}
 
 	@Override

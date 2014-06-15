@@ -4,6 +4,8 @@ import processing.core.PVector;
 
 class PlayerStateWalk extends PlayerState {
 
+	public static final float MAX_DIST_APART = 1500;
+	
 	PVector move;
 	
 	PlayerStateWalk(Player player) {
@@ -13,7 +15,7 @@ class PlayerStateWalk extends PlayerState {
 	
 	void updateState(){
 		super.updateState();
-		if(PVector.dist(player.getLocation(), player.otherPlayer.getLocation()) < 1000){
+		if(PVector.dist(player.getLocation(), player.otherPlayer.getLocation()) <= MAX_DIST_APART){
 			if(player.isOnGround() && (player.key_jump.isPressed() || (player.hasController && player.ctrl_jump.isPressed()))){
 				player.setState(player.jumpState);
 			}
@@ -59,7 +61,7 @@ class PlayerStateWalk extends PlayerState {
 		PVector otherPlayerLocation = player.otherPlayer.getLocation();
 		float newDistToOtherPlayer = PVector.dist(newLocation, otherPlayerLocation);
 		
-		if(newDistToOtherPlayer < 1000) return true;
+		if(newDistToOtherPlayer < MAX_DIST_APART) return true;
 		
 		PVector currentLocation = player.getLocation();
 		if(newDistToOtherPlayer < PVector.dist(currentLocation, otherPlayerLocation)) return true;

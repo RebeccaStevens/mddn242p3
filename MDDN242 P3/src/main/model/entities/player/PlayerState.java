@@ -13,6 +13,10 @@ abstract class PlayerState {
 	boolean canActivate() {
 		return true;
 	}
+	
+	boolean canDeactivate() {
+		return true;
+	}
 
 	void start() {
 		
