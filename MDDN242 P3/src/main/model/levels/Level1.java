@@ -87,7 +87,18 @@ public class Level1 extends StandardLevel implements PConstants {
 		new BasicPlatform(this, x+300, groundLevel-125,  0, 400, 250, 500, groundStyle);
 		new PushableBox  (this, x+300, groundLevel-400,  0, 130, 130, 130, 0.5F, pushableStyle);
 		groundLevel-=200;
-		x+=500;
+		x+=500+500;
+		new BasicPlatform(this, x, groundLevel,       0, 1000, 100, 500, groundStyle);
+		
+		final ButtonBox end = new ButtonBox(this, x, groundLevel-60, 0, 200, 20, 200, endStyle);
+		end.setAction(new ButtonBoxAction() {
+			@Override public boolean condition() {
+				return end  == player1.getGroundEntity() && end == player2.getGroundEntity();
+			}
+			@Override public void event() {
+				new Level2().makeActive();
+			}
+		});
 	}
 
 	private void createLights() {

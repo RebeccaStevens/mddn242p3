@@ -15,6 +15,7 @@ public abstract class StandardLevel extends Level3D{
 	protected final gamelib.Style pushableStyle = new gamelib.Style();
 	protected final gamelib.Style floatStyle = new gamelib.Style();
 	protected final gamelib.Style buttonStyle = new gamelib.Style();
+	protected final gamelib.Style endStyle = new gamelib.Style();
 	
 	protected Player1 player1;
 	protected Player2 player2;
@@ -40,6 +41,9 @@ public abstract class StandardLevel extends Level3D{
 		
 		buttonStyle.fill(0xFFDD66FF);
 		buttonStyle.noStroke();
+		
+		endStyle.fill(0xFFFFFF00);
+		endStyle.noStroke();
 	}
 
 	@Override

@@ -26,7 +26,7 @@ public class Main extends PApplet{
 	
 	@Override
 	public void init(){
-		frame.setTitle("Untitled");
+		frame.setTitle("Untitled*");
 		super.init();
 	}
 
